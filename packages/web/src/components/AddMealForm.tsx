@@ -57,11 +57,19 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
       ? Math.round(((gramsNum * parseFloat(selectedFood.kcalPer100g)) / 100) * 10) / 10
       : null;
 
+  const getDefaultFoodId = () => {
+    const karma = activeFoods.find((f) =>
+      f.name.toLowerCase().includes('karma standardowa'),
+    );
+    return karma?.id ?? activeFoods[0]?.id ?? '';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!foodId || !gramsNum || gramsNum <= 0) return;
     onSubmit(foodId, gramsNum);
-    setGrams(''); // keep food selected — user likely adds multiple portions
+    setGrams('');
+    setFoodId(getDefaultFoodId()); // always reset to Karma standardowa
   };
 
   const colorCls = selectedFood
