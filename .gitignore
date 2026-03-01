@@ -13,5 +13,5 @@ node_modules/
 dist/
 build/
 
-# Drizzle
-packages/api/drizzle/
+# macOS
+.DS_Store

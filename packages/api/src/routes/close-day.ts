@@ -100,7 +100,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       const { result, cat, meatFood, kibbleFood, kibbleKcalPer100g } = await computeCloseDay(req.body);
       const { date, catId, meatFoodId, meatGrams = 0, kibbleFoodId } = req.body;
 
-      const savedEntries = [];
+      const savedEntries: (typeof feedEntries.$inferSelect)[] = [];
       const datetime = new Date(`${date}T20:00:00.000Z`);
 
       // Transaction: insert meat + kibble entries
