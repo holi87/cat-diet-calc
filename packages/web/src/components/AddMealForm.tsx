@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Food } from '../types';
 
 interface AddMealFormProps {
@@ -14,70 +14,115 @@ const categoryLabel: Record<string, string> = {
   TREAT: 'Przysmak',
 };
 
+const categoryColor: Record<string, string> = {
+  KIBBLE: 'text-yellow-700 bg-yellow-100',
+  WET_FOOD: 'text-blue-700 bg-blue-100',
+  MEAT: 'text-red-700 bg-red-100',
+  TREAT: 'text-purple-700 bg-purple-100',
+};
+
 export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
   const [foodId, setFoodId] = useState('');
   const [grams, setGrams] = useState('');
-  const [search, setSearch] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const filtered = foods.filter(
-    (f) =>
-      !f.archived &&
-      f.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const activeFoods = foods.filter((f) => !f.archived);
 
-  const selectedFood = foods.find((f) => f.id === foodId);
+  // Auto-select "Karma standardowa" on first load, fallback to first food
+  useEffect(() => {
+    if (!foodId && activeFoods.length > 0) {
+      const karma = activeFoods.find((f) =>
+        f.name.toLowerCase().includes('karma standardowa'),
+      );
+      setFoodId(karma?.id ?? activeFoods[0].id);
+    }
+  }, [activeFoods, foodId]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selectedFood = activeFoods.find((f) => f.id === foodId);
   const gramsNum = parseFloat(grams);
   const preview =
     selectedFood && gramsNum > 0
-      ? Math.round((gramsNum * parseFloat(selectedFood.kcalPer100g)) / 100 * 10) / 10
+      ? Math.round(((gramsNum * parseFloat(selectedFood.kcalPer100g)) / 100) * 10) / 10
       : null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!foodId || !gramsNum || gramsNum <= 0) return;
     onSubmit(foodId, gramsNum);
-    setGrams('');
-    setSearch('');
-    setFoodId('');
+    setGrams(''); // keep food selected — user likely adds multiple portions
   };
+
+  const colorCls = selectedFood
+    ? (categoryColor[selectedFood.category] ?? 'text-gray-600 bg-gray-100')
+    : '';
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
       <h3 className="font-semibold text-gray-700 text-sm">Dodaj posiłek</h3>
 
-      {/* Food search/select */}
-      <div>
-        <input
-          type="text"
-          placeholder="Szukaj produktu..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setFoodId(''); }}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-        />
-        {search && !foodId && (
-          <div className="mt-1 border border-gray-200 rounded-lg overflow-hidden shadow-sm max-h-40 overflow-y-auto">
-            {filtered.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-400">Brak wyników</div>
-            ) : (
-              filtered.map((f) => (
+      {/* Food selector */}
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setDropdownOpen((o) => !o)}
+          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm flex items-center gap-2 text-left focus:outline-none focus:ring-2 focus:ring-brand-400 hover:border-gray-300 transition-colors"
+        >
+          {selectedFood ? (
+            <>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${colorCls}`}>
+                {categoryLabel[selectedFood.category] ?? selectedFood.category}
+              </span>
+              <span className="flex-1 text-gray-800 font-medium">{selectedFood.name}</span>
+              <span className="text-xs text-gray-400 flex-shrink-0">
+                {selectedFood.kcalPer100g} kcal/100g
+              </span>
+            </>
+          ) : (
+            <span className="flex-1 text-gray-400">Wybierz produkt…</span>
+          )}
+          <span className={`text-gray-400 text-xs transition-transform duration-150 ${dropdownOpen ? 'rotate-180' : ''}`}>
+            ▾
+          </span>
+        </button>
+
+        {/* Dropdown list */}
+        {dropdownOpen && (
+          <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+            {activeFoods.map((f) => {
+              const isSelected = f.id === foodId;
+              const clr = categoryColor[f.category] ?? 'text-gray-600 bg-gray-100';
+              return (
                 <button
                   key={f.id}
                   type="button"
-                  onClick={() => { setFoodId(f.id); setSearch(f.name); }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex justify-between items-center"
+                  onClick={() => { setFoodId(f.id); setDropdownOpen(false); }}
+                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2 transition-colors ${
+                    isSelected ? 'bg-brand-50' : 'hover:bg-gray-50'
+                  }`}
                 >
-                  <span>{f.name}</span>
-                  <span className="text-xs text-gray-400">
-                    {categoryLabel[f.category]} · {f.kcalPer100g} kcal/100g
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${clr}`}>
+                    {categoryLabel[f.category] ?? f.category}
                   </span>
+                  <span className={`flex-1 text-sm ${isSelected ? 'text-brand-700 font-semibold' : 'text-gray-700'}`}>
+                    {f.name}
+                  </span>
+                  <span className="text-xs text-gray-400 flex-shrink-0">{f.kcalPer100g} kcal/100g</span>
+                  {isSelected && <span className="text-brand-500 text-xs">✓</span>}
                 </button>
-              ))
-            )}
-          </div>
-        )}
-        {foodId && selectedFood && (
-          <div className="mt-1 text-xs text-gray-400">
-            {categoryLabel[selectedFood.category]} · {selectedFood.kcalPer100g} kcal/100g
+              );
+            })}
           </div>
         )}
       </div>
@@ -103,7 +148,7 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
           disabled={!foodId || !gramsNum || gramsNum <= 0 || isLoading}
           className="bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors"
         >
-          {isLoading ? '...' : 'Dodaj'}
+          {isLoading ? '…' : 'Dodaj'}
         </button>
       </div>
     </form>
