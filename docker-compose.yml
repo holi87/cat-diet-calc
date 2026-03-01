@@ -34,12 +34,7 @@ services:
     networks:
       - catcal-net
     ports:
-      - "4000:4000"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.catcal-api.rule=Host(`cat.sh.info.pl`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.catcal-api.priority=2"
-      - "traefik.http.services.catcal-api.loadbalancer.server.port=4000"
+      - "8101:4000"
 
   catcal-web:
     build:
@@ -52,12 +47,7 @@ services:
     networks:
       - catcal-net
     ports:
-      - "3000:80"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.catcal-web.rule=Host(`cat.sh.info.pl`)"
-      - "traefik.http.routers.catcal-web.priority=1"
-      - "traefik.http.services.catcal-web.loadbalancer.server.port=80"
+      - "8100:80"
 
 volumes:
   catcal-db-data:
