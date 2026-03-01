@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiGet, apiPost, apiPut } from '../api/client';
+import { apiGet, apiPost, apiPut, apiDelete } from '../api/client';
 import { Cat } from '../types';
 
 export function CatsAdmin() {
@@ -9,6 +9,7 @@ export function CatsAdmin() {
   const [editingCat, setEditingCat] = useState<Cat | null>(null);
   const [name, setName] = useState('');
   const [kcal, setKcal] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const { data: cats = [], isLoading } = useQuery<Cat[]>({
     queryKey: ['cats'],
@@ -35,6 +36,14 @@ export function CatsAdmin() {
   const { mutate: toggleActive } = useMutation({
     mutationFn: (cat: Cat) => apiPut(`/cats/${cat.id}`, { active: !cat.active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cats'] }),
+  });
+
+  const { mutate: deleteCat, isPending: deleting } = useMutation({
+    mutationFn: (id: string) => apiDelete(`/cats/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cats'] });
+      setConfirmDeleteId(null);
+    },
   });
 
   function startEdit(cat: Cat) {
@@ -112,25 +121,57 @@ export function CatsAdmin() {
       ) : (
         <div className="space-y-2">
           {cats.map((cat) => (
-            <div key={cat.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
-              <div className="flex-1">
-                <div className="font-semibold text-gray-800">{cat.name}</div>
-                <div className="text-xs text-gray-400">Limit: {cat.dailyKcalTarget} kcal/dzień</div>
-              </div>
-              <button
-                onClick={() => toggleActive(cat)}
-                className={`text-xs px-2 py-1 rounded-full font-medium ${
-                  cat.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                }`}
-              >
-                {cat.active ? 'aktywny' : 'nieaktywny'}
-              </button>
-              <button
-                onClick={() => startEdit(cat)}
-                className="text-gray-400 hover:text-brand-500 transition-colors text-sm"
-              >
-                ✏️
-              </button>
+            <div key={cat.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
+              {confirmDeleteId === cat.id ? (
+                /* Second confirmation step */
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 text-sm text-red-600 font-medium">
+                    Na pewno usunąć <strong>{cat.name}</strong>?
+                  </span>
+                  <button
+                    onClick={() => deleteCat(cat.id)}
+                    disabled={deleting}
+                    className="bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    {deleting ? '…' : 'Usuń'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteId(null)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Anuluj
+                  </button>
+                </div>
+              ) : (
+                /* Normal row */
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-800">{cat.name}</div>
+                    <div className="text-xs text-gray-400">Limit: {cat.dailyKcalTarget} kcal/dzień</div>
+                  </div>
+                  <button
+                    onClick={() => toggleActive(cat)}
+                    className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      cat.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {cat.active ? 'aktywny' : 'nieaktywny'}
+                  </button>
+                  <button
+                    onClick={() => startEdit(cat)}
+                    className="text-gray-400 hover:text-brand-500 transition-colors text-sm"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => { setConfirmDeleteId(cat.id); setShowForm(false); }}
+                    className="text-gray-300 hover:text-red-400 transition-colors text-sm"
+                    title="Usuń kota"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

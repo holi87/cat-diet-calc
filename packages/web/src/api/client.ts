@@ -5,6 +5,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
     const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
     throw new Error(err.error ?? `API error: ${res.status}`);
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 

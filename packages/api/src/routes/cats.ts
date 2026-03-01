@@ -38,6 +38,29 @@ export async function catsRoutes(fastify: FastifyInstance) {
     },
   );
 
+  // DELETE /api/cats/:id — soft-delete (set active = false)
+  fastify.delete<{ Params: { id: string } }>(
+    '/cats/:id',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          properties: { id: { type: 'string', format: 'uuid' } },
+          required: ['id'],
+        },
+      },
+    },
+    async (req, reply) => {
+      const [cat] = await db
+        .update(cats)
+        .set({ active: false })
+        .where(eq(cats.id, req.params.id))
+        .returning();
+      if (!cat) return reply.code(404).send({ error: 'Cat not found' });
+      return reply.code(204).send();
+    },
+  );
+
   // PUT /api/cats/:id — update cat
   fastify.put<{
     Params: { id: string };
