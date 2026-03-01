@@ -1,5 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+
+function useIosInstallBanner() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as { standalone?: boolean }).standalone === true;
+    const dismissed = sessionStorage.getItem('pwa-banner-dismissed');
+    if (isIOS && !isStandalone && !dismissed) setShow(true);
+  }, []);
+  const dismiss = () => {
+    sessionStorage.setItem('pwa-banner-dismissed', '1');
+    setShow(false);
+  };
+  return { show, dismiss };
+}
 
 const mainNav = [
   { to: '/', label: 'Dzisiaj', icon: '🏠' },
@@ -16,6 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [adminOpen, setAdminOpen] = useState(false);
   const location = useLocation();
   const isAdminActive = adminNav.some((i) => location.pathname.startsWith(i.to));
+  const { show: showIosBanner, dismiss: dismissIosBanner } = useIosInstallBanner();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" onClick={() => setAdminOpen(false)}>
@@ -29,6 +47,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-4 pb-24">
         {children}
       </main>
+
+      {/* iOS PWA install banner */}
+      {showIosBanner && (
+        <div className="fixed bottom-16 left-0 right-0 z-20 px-4 pb-2">
+          <div className="max-w-lg mx-auto bg-white border border-gray-200 rounded-2xl shadow-lg px-4 py-3 flex items-start gap-3">
+            <span className="text-3xl mt-0.5">🐱</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800">Dodaj CatCal do ekranu głównego</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Dotknij <span className="inline-block align-middle">⎙</span> „Udostępnij", a następnie „Dodaj do ekranu głównego"
+              </p>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); dismissIosBanner(); }}
+              className="text-gray-400 hover:text-gray-600 text-lg leading-none mt-0.5 flex-shrink-0"
+              aria-label="Zamknij"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
