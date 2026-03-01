@@ -4,3 +4,14 @@ docs/
 # Claude
 CLAUDE.md
 work.md
+
+# Env
+.env
+
+# Node
+node_modules/
+dist/
+build/
+
+# Drizzle
+packages/api/drizzle/
