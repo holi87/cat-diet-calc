@@ -142,8 +142,8 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
             type="number"
             placeholder="Gramatura (g)"
             value={grams}
-            min={1}
-            step={1}
+            min={0.1}
+            step={0.1}
             onChange={(e) => setGrams(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
