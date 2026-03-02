@@ -1,9 +1,9 @@
 import { FeedEntry, FoodCategory } from '../types';
 
 const categoryColor: Record<FoodCategory, string> = {
-  BASE: 'bg-yellow-400',
-  KIBBLE: 'bg-gray-400',
-  WET_FOOD: 'bg-green-500',
+  BASE: 'bg-green-500',
+  KIBBLE: 'bg-amber-700',
+  WET_FOOD: 'bg-blue-500',
   MEAT: 'bg-red-500',
   TREAT: 'bg-orange-400',
 };

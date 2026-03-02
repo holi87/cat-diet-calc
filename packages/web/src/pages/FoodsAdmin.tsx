@@ -20,9 +20,9 @@ const categoryLabel: Record<FoodCategory, string> = {
 };
 
 const categoryColor: Record<FoodCategory, string> = {
-  BASE: 'bg-yellow-100 text-yellow-700',
-  KIBBLE: 'bg-gray-100 text-gray-600',
-  WET_FOOD: 'bg-green-100 text-green-700',
+  BASE: 'bg-green-100 text-green-700',
+  KIBBLE: 'bg-amber-100 text-amber-800',
+  WET_FOOD: 'bg-blue-100 text-blue-700',
   MEAT: 'bg-red-100 text-red-700',
   TREAT: 'bg-orange-100 text-orange-700',
 };
