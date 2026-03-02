@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { CHANGELOG } from '../changelog';
 
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 
 function useIosInstallBanner() {
   const [show, setShow] = useState(false);
@@ -59,21 +60,26 @@ function InfoModal({ onClose }: { onClose: () => void }) {
           </p>
         </div>
 
-        {/* Changelog */}
+        {/* Changelog — ostatnie 3 wersje, od najnowszej */}
         <div className="bg-gray-50 rounded-xl px-4 py-3 mb-5 text-left">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
-            Co nowego w v{APP_VERSION}
+            Historia zmian
           </p>
-          <ul className="space-y-1.5">
-            <li className="flex items-start gap-2 text-xs text-gray-600">
-              <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-              <span>Naprawiony błąd z błędnym liczeniem karmy na kolację</span>
-            </li>
-            <li className="flex items-start gap-2 text-xs text-gray-600">
-              <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-              <span>Naprawiony błąd z wyświetlaniem zaokrągleń (np. 116,9999 kcal)</span>
-            </li>
-          </ul>
+          <div className="max-h-40 overflow-y-auto space-y-3 pr-1">
+            {[...CHANGELOG].reverse().slice(0, 3).map((entry) => (
+              <div key={entry.version}>
+                <p className="text-xs font-semibold text-gray-500 mb-1">v{entry.version}</p>
+                <ul className="space-y-1">
+                  {entry.changes.map((change, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                      <span>{change}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         <button

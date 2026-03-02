@@ -102,8 +102,8 @@ function DinnerCard({
         )}
         {kibbleEntry && (
           <div className="text-xs text-gray-600 flex items-center justify-between">
-            <span>
-              <span className="mr-1">🟡</span>
+            <span className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${categoryColor[(kibbleEntry.foodCategory ?? 'BASE') as FoodCategory]}`} />
               {kibbleEntry.foodName ?? 'Karma'}: {parseFloat(kibbleEntry.grams)}g
             </span>
             <div className="flex items-center gap-2">

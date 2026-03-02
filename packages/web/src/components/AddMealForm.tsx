@@ -8,6 +8,7 @@ interface AddMealFormProps {
 }
 
 const categoryLabel: Record<string, string> = {
+  BASE: 'Baza',
   KIBBLE: 'Karma',
   WET_FOOD: 'Mokra',
   MEAT: 'Mięso',
@@ -15,7 +16,8 @@ const categoryLabel: Record<string, string> = {
 };
 
 const categoryColor: Record<string, string> = {
-  KIBBLE: 'text-yellow-700 bg-yellow-100',
+  BASE: 'text-green-700 bg-green-100',
+  KIBBLE: 'text-amber-800 bg-amber-100',
   WET_FOOD: 'text-blue-700 bg-blue-100',
   MEAT: 'text-red-700 bg-red-100',
   TREAT: 'text-purple-700 bg-purple-100',
