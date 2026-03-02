@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.1.2';
 
 function useIosInstallBanner() {
   const [show, setShow] = useState(false);

@@ -103,6 +103,17 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       const savedEntries: (typeof feedEntries.$inferSelect)[] = [];
       const datetime = new Date(`${date}T20:00:00.000Z`);
 
+      // Resolve kibble food ID before the transaction
+      let resolvedKibbleFoodId: string | undefined = kibbleFoodId;
+      if (!resolvedKibbleFoodId && result.kibbleGrams > 0) {
+        const [defaultKibble] = await db
+          .select({ id: foods.id })
+          .from(foods)
+          .where(and(eq(foods.category, 'KIBBLE'), eq(foods.archived, false)))
+          .limit(1);
+        resolvedKibbleFoodId = defaultKibble?.id;
+      }
+
       // Transaction: insert meat + kibble entries
       await db.transaction(async (tx) => {
         // 1. Meat entry
@@ -122,32 +133,21 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
           savedEntries.push(e);
         }
 
-        // 2. Kibble entry (only if kibbleGrams > 0)
-        if (result.kibbleGrams > 0) {
-          const actualKibbleFoodId = kibbleFoodId ?? (
-            await tx
-              .select()
-              .from(foods)
-              .where(and(eq(foods.category, 'KIBBLE'), eq(foods.archived, false)))
-              .limit(1)
-              .then((r) => r[0]?.id)
-          );
-
-          if (actualKibbleFoodId) {
-            const kcal = calculateKcal(result.kibbleGrams, kibbleKcalPer100g);
-            const [e] = await tx
-              .insert(feedEntries)
-              .values({
-                catId,
-                foodId: actualKibbleFoodId,
-                grams: String(result.kibbleGrams),
-                kcalCalculated: String(kcal),
-                datetime: new Date(datetime.getTime() + 60000),
-                note: 'kolacja:karma',
-              })
-              .returning();
-            savedEntries.push(e);
-          }
+        // 2. Kibble entry (only if kibbleGrams > 0 and food exists)
+        if (result.kibbleGrams > 0 && resolvedKibbleFoodId) {
+          const kcal = calculateKcal(result.kibbleGrams, kibbleKcalPer100g);
+          const [e] = await tx
+            .insert(feedEntries)
+            .values({
+              catId,
+              foodId: resolvedKibbleFoodId,
+              grams: String(result.kibbleGrams),
+              kcalCalculated: String(kcal),
+              datetime: new Date(datetime.getTime() + 60000),
+              note: 'kolacja:karma',
+            })
+            .returning();
+          savedEntries.push(e);
         }
       });
 
