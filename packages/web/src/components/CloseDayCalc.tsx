@@ -18,14 +18,21 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   });
 
   const activeFoods = foods.filter((f) => !f.archived);
+  const nonKibbleFoods = activeFoods.filter((f) => f.category !== 'KIBBLE');
 
+  // --- Auto-calc mode state ---
   const [meatFoodId, setMeatFoodId] = useState('');
   const [meatGrams, setMeatGrams] = useState('');
-  const [manualGrams, setManualGrams] = useState('');
   const [committed, setCommitted] = useState(false);
   const [calcResult, setCalcResult] = useState<CloseDayResult | null>(null);
 
-  // Recalculate on the fly
+  // --- Manual mode state ---
+  const [manualMeatFoodId, setManualMeatFoodId] = useState('');
+  const [manualMeatGrams, setManualMeatGrams] = useState('');
+  const [manualKibbleGrams, setManualKibbleGrams] = useState('');
+  const [manualError, setManualError] = useState<string | null>(null);
+
+  // Recalculate on the fly (auto-calc mode)
   const { mutate: calculate } = useMutation({
     mutationFn: () =>
       apiPost<CloseDayResult>('/close-day', {
@@ -42,6 +49,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meatFoodId, meatGrams]);
 
+  // Auto-calc commit
   const { mutate: commit, isPending: committing } = useMutation({
     mutationFn: () =>
       apiPost<CloseDayResult>('/close-day/commit', {
@@ -57,19 +65,54 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
     },
   });
 
+  // Manual dinner add
+  const hasValidManualMeat =
+    !manualMeatFoodId || parseFloat(manualMeatGrams) > 0;
+  const hasAnyManualEntry =
+    parseFloat(manualKibbleGrams) > 0 ||
+    (!!manualMeatFoodId && parseFloat(manualMeatGrams) > 0);
+  const canSubmitManual = hasValidManualMeat && hasAnyManualEntry;
+
   const { mutate: addManual, isPending: addingManual } = useMutation({
-    mutationFn: () => {
-      const kibble = foods.find((f) => f.category === 'KIBBLE' && !f.archived);
-      if (!kibble) throw new Error('Brak karmy w bazie');
-      return apiPost('/feed-entries', {
-        catId,
-        foodId: kibble.id,
-        grams: parseFloat(manualGrams),
-      });
+    mutationFn: async () => {
+      setManualError(null);
+      const dinnerDatetime = `${date}T20:00:00.000Z`;
+      const kibbleDatetime = `${date}T20:01:00.000Z`;
+
+      if (manualMeatFoodId && parseFloat(manualMeatGrams) > 0) {
+        await apiPost('/feed-entries', {
+          catId,
+          foodId: manualMeatFoodId,
+          grams: parseFloat(manualMeatGrams),
+          note: 'kolacja:mięso',
+          datetime: dinnerDatetime,
+        });
+      }
+
+      const kibbleGrams = parseFloat(manualKibbleGrams);
+      if (kibbleGrams > 0) {
+        const kibble = foods.find((f) => f.category === 'KIBBLE' && !f.archived);
+        if (!kibble) throw new Error('Brak produktu karma w bazie');
+        await apiPost('/feed-entries', {
+          catId,
+          foodId: kibble.id,
+          grams: kibbleGrams,
+          note: 'kolacja:karma',
+          datetime: kibbleDatetime,
+        });
+      }
     },
     onSuccess: () => {
-      setManualGrams('');
+      setManualKibbleGrams('');
+      setManualMeatFoodId('');
+      setManualMeatGrams('');
+      setManualError(null);
       qc.invalidateQueries({ queryKey: ['day-summary', catId, date] });
+    },
+    onError: (err) => {
+      setManualError(
+        err instanceof Error ? err.message : 'Błąd dodawania kolacji',
+      );
     },
   });
 
@@ -77,7 +120,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
 
   return (
     <div className="space-y-4">
-      {/* Meat selector */}
+      {/* Meat selector (auto-calc mode) */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
         <h3 className="font-semibold text-gray-700 text-sm">Dodatek na kolację</h3>
         <select
@@ -97,15 +140,15 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
             type="number"
             placeholder="Gramatura dodatku (g)"
             value={meatGrams}
-            min={0}
-            step={1}
+            min={0.1}
+            step={0.1}
             onChange={(e) => setMeatGrams(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         )}
       </div>
 
-      {/* Result panel */}
+      {/* Auto-calc result panel */}
       {r && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2">
           <div className="text-sm text-gray-500 flex justify-between">
@@ -167,27 +210,59 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
         </div>
       )}
 
-      {/* Manual mode */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2">
-        <h3 className="text-sm font-semibold text-gray-500">Tryb ręczny (karma)</h3>
+      {/* Manual dinner mode */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-500">Tryb ręczny (kolacja)</h3>
+
+        <div>
+          <label className="text-xs text-gray-400 mb-1 block">Dodatek (opcjonalnie)</label>
+          <select
+            value={manualMeatFoodId}
+            onChange={(e) => setManualMeatFoodId(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+          >
+            <option value="">— brak dodatku —</option>
+            {nonKibbleFoods.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name} ({f.kcalPer100g} kcal/100g)
+              </option>
+            ))}
+          </select>
+          {manualMeatFoodId && (
+            <input
+              type="number"
+              placeholder="Gramatura dodatku (g)"
+              value={manualMeatGrams}
+              min={0.1}
+              step={0.1}
+              onChange={(e) => setManualMeatGrams(e.target.value)}
+              className="mt-2 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+          )}
+        </div>
+
         <div className="flex gap-2">
           <input
             type="number"
-            placeholder="Gramatura karmy (g)"
-            value={manualGrams}
-            min={1}
-            step={1}
-            onChange={(e) => setManualGrams(e.target.value)}
+            placeholder="Karma standardowa (g)"
+            value={manualKibbleGrams}
+            min={0.1}
+            step={0.1}
+            onChange={(e) => setManualKibbleGrams(e.target.value)}
             className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
           <button
             onClick={() => addManual()}
-            disabled={!manualGrams || parseFloat(manualGrams) <= 0 || addingManual}
+            disabled={!canSubmitManual || addingManual}
             className="bg-gray-600 hover:bg-gray-700 disabled:opacity-40 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
           >
-            Dodaj ręcznie
+            {addingManual ? '…' : 'Dodaj'}
           </button>
         </div>
+
+        {manualError && (
+          <p className="text-xs text-red-500">{manualError}</p>
+        )}
       </div>
     </div>
   );

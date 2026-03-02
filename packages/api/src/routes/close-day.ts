@@ -116,6 +116,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
               grams: String(meatGrams),
               kcalCalculated: String(kcal),
               datetime,
+              note: 'kolacja:mięso',
             })
             .returning();
           savedEntries.push(e);
@@ -142,6 +143,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
                 grams: String(result.kibbleGrams),
                 kcalCalculated: String(kcal),
                 datetime: new Date(datetime.getTime() + 60000),
+                note: 'kolacja:karma',
               })
               .returning();
             savedEntries.push(e);
