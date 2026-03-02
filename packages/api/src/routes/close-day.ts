@@ -63,12 +63,27 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       meatKcalPer100g = parseFloat(meatFood.kcalPer100g);
     }
 
-    let kibbleFood = null;
+    // Resolve kibble food: by explicit ID if provided, otherwise find default KIBBLE product
+    let resolvedKibbleFoodId: string | undefined = kibbleFoodId;
+    let kibbleFood: typeof foods.$inferSelect | null = null;
     let kibbleKcalPer100g = STANDARD_KIBBLE_KCAL;
+
     if (kibbleFoodId) {
       [kibbleFood] = await db.select().from(foods).where(eq(foods.id, kibbleFoodId));
       if (!kibbleFood) throw { statusCode: 404, message: 'Kibble food not found' };
       kibbleKcalPer100g = parseFloat(kibbleFood.kcalPer100g);
+      resolvedKibbleFoodId = kibbleFoodId;
+    } else {
+      // Always look up the actual KIBBLE food so we use its real kcal/100g
+      [kibbleFood] = await db
+        .select()
+        .from(foods)
+        .where(and(eq(foods.category, 'KIBBLE'), eq(foods.archived, false)))
+        .limit(1);
+      if (kibbleFood) {
+        kibbleKcalPer100g = parseFloat(kibbleFood.kcalPer100g);
+        resolvedKibbleFoodId = kibbleFood.id;
+      }
     }
 
     const result = calculateCloseDay({
@@ -79,7 +94,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       kibbleKcalPer100g,
     });
 
-    return { result, cat, meatFood, kibbleFood, kibbleKcalPer100g };
+    return { result, cat, meatFood, kibbleFood, kibbleKcalPer100g, resolvedKibbleFoodId };
   }
 
   // POST /api/close-day — calculate without saving
@@ -97,22 +112,11 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
   // POST /api/close-day/commit — calculate and save
   fastify.post<{ Body: CloseDayBody }>('/close-day/commit', { schema: { body: bodySchema } }, async (req, reply) => {
     try {
-      const { result, cat, meatFood, kibbleFood, kibbleKcalPer100g } = await computeCloseDay(req.body);
-      const { date, catId, meatFoodId, meatGrams = 0, kibbleFoodId } = req.body;
+      const { result, meatFood, kibbleKcalPer100g, resolvedKibbleFoodId } = await computeCloseDay(req.body);
+      const { date, catId, meatFoodId, meatGrams = 0 } = req.body;
 
       const savedEntries: (typeof feedEntries.$inferSelect)[] = [];
       const datetime = new Date(`${date}T20:00:00.000Z`);
-
-      // Resolve kibble food ID before the transaction
-      let resolvedKibbleFoodId: string | undefined = kibbleFoodId;
-      if (!resolvedKibbleFoodId && result.kibbleGrams > 0) {
-        const [defaultKibble] = await db
-          .select({ id: foods.id })
-          .from(foods)
-          .where(and(eq(foods.category, 'KIBBLE'), eq(foods.archived, false)))
-          .limit(1);
-        resolvedKibbleFoodId = defaultKibble?.id;
-      }
 
       // Transaction: insert meat + kibble entries
       await db.transaction(async (tx) => {

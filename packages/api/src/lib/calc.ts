@@ -26,9 +26,9 @@ export function calculateCloseDay(input: CloseDayInput): CloseDayResult {
   const { kcalToday, dailyKcalTarget, meatGrams, meatKcalPer100g, kibbleKcalPer100g } = input;
 
   const kcalMeat = calculateKcal(meatGrams, meatKcalPer100g);
-  const kcalLeftForKibble = dailyKcalTarget - kcalToday - kcalMeat;
+  const kcalLeftForKibble = Math.round((dailyKcalTarget - kcalToday - kcalMeat) * 10) / 10;
   const kibbleGrams = Math.round((kcalLeftForKibble * 100 / kibbleKcalPer100g) * 10) / 10;
-  const overLimitKcal = Math.max(0, -kcalLeftForKibble);
+  const overLimitKcal = Math.max(0, Math.round(-kcalLeftForKibble * 10) / 10);
 
   return {
     kcalToday,
