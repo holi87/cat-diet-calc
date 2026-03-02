@@ -41,7 +41,7 @@ export async function foodsRoutes(fastify: FastifyInstance) {
           required: ['name', 'category', 'kcalPer100g'],
           properties: {
             name: { type: 'string', minLength: 1 },
-            category: { type: 'string', enum: ['KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
+            category: { type: 'string', enum: ['BASE', 'KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
             kcalPer100g: { type: 'number', minimum: 0 },
           },
         },
@@ -77,7 +77,7 @@ export async function foodsRoutes(fastify: FastifyInstance) {
           type: 'object',
           properties: {
             name: { type: 'string', minLength: 1 },
-            category: { type: 'string', enum: ['KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
+            category: { type: 'string', enum: ['BASE', 'KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
             kcalPer100g: { type: 'number', minimum: 0 },
           },
         },

@@ -4,6 +4,7 @@ import { apiGet, apiPost, apiPut } from '../api/client';
 import { Food, FoodCategory } from '../types';
 
 const categories: { value: FoodCategory; label: string }[] = [
+  { value: 'BASE', label: 'Karma bazowa' },
   { value: 'KIBBLE', label: 'Karma sucha' },
   { value: 'WET_FOOD', label: 'Karma mokra' },
   { value: 'MEAT', label: 'Mięso' },
@@ -11,6 +12,7 @@ const categories: { value: FoodCategory; label: string }[] = [
 ];
 
 const categoryLabel: Record<FoodCategory, string> = {
+  BASE: 'Baza',
   KIBBLE: 'Karma',
   WET_FOOD: 'Mokra',
   MEAT: 'Mięso',
@@ -18,6 +20,7 @@ const categoryLabel: Record<FoodCategory, string> = {
 };
 
 const categoryColor: Record<FoodCategory, string> = {
+  BASE: 'bg-yellow-100 text-yellow-700',
   KIBBLE: 'bg-gray-100 text-gray-600',
   WET_FOOD: 'bg-green-100 text-green-700',
   MEAT: 'bg-red-100 text-red-700',

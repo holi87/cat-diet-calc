@@ -74,11 +74,11 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       kibbleKcalPer100g = parseFloat(kibbleFood.kcalPer100g);
       resolvedKibbleFoodId = kibbleFoodId;
     } else {
-      // Always look up the actual KIBBLE food so we use its real kcal/100g
+      // Look up the BASE food (standard kibble) to use its real kcal/100g
       [kibbleFood] = await db
         .select()
         .from(foods)
-        .where(and(eq(foods.category, 'KIBBLE'), eq(foods.archived, false)))
+        .where(and(eq(foods.category, 'BASE'), eq(foods.archived, false)))
         .limit(1);
       if (kibbleFood) {
         kibbleKcalPer100g = parseFloat(kibbleFood.kcalPer100g);
@@ -116,7 +116,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       const { date, catId, meatFoodId, meatGrams = 0 } = req.body;
 
       const savedEntries: (typeof feedEntries.$inferSelect)[] = [];
-      const datetime = new Date(`${date}T20:00:00.000Z`);
+      const datetime = new Date();
 
       // Transaction: insert meat + kibble entries
       await db.transaction(async (tx) => {

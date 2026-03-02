@@ -1,4 +1,4 @@
-export type FoodCategory = 'KIBBLE' | 'WET_FOOD' | 'MEAT' | 'TREAT';
+export type FoodCategory = 'BASE' | 'KIBBLE' | 'WET_FOOD' | 'MEAT' | 'TREAT';
 
 export interface Cat {
   id: string;

@@ -18,13 +18,22 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   });
 
   const activeFoods = foods.filter((f) => !f.archived);
-  const nonKibbleFoods = activeFoods.filter((f) => f.category !== 'KIBBLE');
+  const baseFoods = activeFoods.filter((f) => f.category === 'BASE');
+  const nonBaseFoods = activeFoods.filter((f) => f.category !== 'BASE');
 
   // --- Auto-calc mode state ---
   const [meatFoodId, setMeatFoodId] = useState('');
   const [meatGrams, setMeatGrams] = useState('');
+  const [kibbleFoodId, setKibbleFoodId] = useState('');
   const [committed, setCommitted] = useState(false);
   const [calcResult, setCalcResult] = useState<CloseDayResult | null>(null);
+
+  // Auto-select first BASE food when foods load
+  useEffect(() => {
+    if (!kibbleFoodId && baseFoods.length > 0) {
+      setKibbleFoodId(baseFoods[0].id);
+    }
+  }, [baseFoods.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Manual mode state ---
   const [manualMeatFoodId, setManualMeatFoodId] = useState('');
@@ -40,6 +49,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
         date,
         ...(meatFoodId ? { meatFoodId } : {}),
         meatGrams: parseFloat(meatGrams) || 0,
+        ...(kibbleFoodId ? { kibbleFoodId } : {}),
       }),
     onSuccess: setCalcResult,
   });
@@ -47,7 +57,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   useEffect(() => {
     calculate();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meatFoodId, meatGrams]);
+  }, [meatFoodId, meatGrams, kibbleFoodId]);
 
   // Auto-calc commit
   const { mutate: commit, isPending: committing } = useMutation({
@@ -57,6 +67,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
         date,
         ...(meatFoodId ? { meatFoodId } : {}),
         meatGrams: parseFloat(meatGrams) || 0,
+        ...(kibbleFoodId ? { kibbleFoodId } : {}),
       }),
     onSuccess: (res) => {
       setCommitted(true);
@@ -76,8 +87,9 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   const { mutate: addManual, isPending: addingManual } = useMutation({
     mutationFn: async () => {
       setManualError(null);
-      const dinnerDatetime = `${date}T20:00:00.000Z`;
-      const kibbleDatetime = `${date}T20:01:00.000Z`;
+      const now = new Date();
+      const dinnerDatetime = now.toISOString();
+      const kibbleDatetime = new Date(now.getTime() + 60000).toISOString();
 
       if (manualMeatFoodId && parseFloat(manualMeatGrams) > 0) {
         await apiPost('/feed-entries', {
@@ -91,8 +103,8 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
 
       const kibbleGrams = parseFloat(manualKibbleGrams);
       if (kibbleGrams > 0) {
-        const kibble = foods.find((f) => f.category === 'KIBBLE' && !f.archived);
-        if (!kibble) throw new Error('Brak produktu karma w bazie');
+        const kibble = baseFoods[0] ?? foods.find((f) => f.category === 'KIBBLE' && !f.archived);
+        if (!kibble) throw new Error('Brak produktu karma bazowa w bazie');
         await apiPost('/feed-entries', {
           catId,
           foodId: kibble.id,
@@ -129,7 +141,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
         >
           <option value="">— brak dodatku —</option>
-          {activeFoods.map((f) => (
+          {nonBaseFoods.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name} ({f.kcalPer100g} kcal/100g)
             </option>
@@ -145,6 +157,30 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
             onChange={(e) => setMeatGrams(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
+        )}
+
+        {/* Kibble (BASE) food selector — shown only if multiple BASE foods exist */}
+        {baseFoods.length > 1 && (
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Karma bazowa</label>
+            <select
+              value={kibbleFoodId}
+              onChange={(e) => setKibbleFoodId(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+            >
+              {baseFoods.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name} ({f.kcalPer100g} kcal/100g)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {baseFoods.length === 0 && (
+          <p className="text-xs text-red-500">
+            ⚠️ Brak produktu z kategorią „Karma bazowa" w bazie. Dodaj go w Adminie → Produkty.
+          </p>
         )}
       </div>
 
@@ -222,7 +258,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="">— brak dodatku —</option>
-            {nonKibbleFoods.map((f) => (
+            {nonBaseFoods.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.name} ({f.kcalPer100g} kcal/100g)
               </option>
