@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.2.0';
 
 function useIosInstallBanner() {
   const [show, setShow] = useState(false);
@@ -49,7 +49,7 @@ function InfoModal({ onClose }: { onClose: () => void }) {
         <h2 className="text-xl font-bold text-gray-800 mb-1">CatCal</h2>
         <p className="text-xs text-gray-400 mb-5">wersja {APP_VERSION}</p>
 
-        <div className="bg-brand-50 rounded-xl px-5 py-4 mb-5">
+        <div className="bg-brand-50 rounded-xl px-5 py-4 mb-4">
           <p className="text-sm text-brand-700 font-medium leading-relaxed">
             Aplikacja dedykowana dla najwspanialszej na świecie
           </p>
@@ -57,6 +57,23 @@ function InfoModal({ onClose }: { onClose: () => void }) {
           <p className="text-xs text-brand-500 mt-2 leading-relaxed">
             Opiekunki Myszy<br />i cudownej Partnerki życiowej
           </p>
+        </div>
+
+        {/* Changelog */}
+        <div className="bg-gray-50 rounded-xl px-4 py-3 mb-5 text-left">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+            Co nowego w v{APP_VERSION}
+          </p>
+          <ul className="space-y-1.5">
+            <li className="flex items-start gap-2 text-xs text-gray-600">
+              <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+              <span>Naprawiony błąd z błędnym liczeniem karmy na kolację</span>
+            </li>
+            <li className="flex items-start gap-2 text-xs text-gray-600">
+              <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+              <span>Naprawiony błąd z wyświetlaniem zaokrągleń (np. 116,9999 kcal)</span>
+            </li>
+          </ul>
         </div>
 
         <button
