@@ -50,4 +50,10 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Ulepszony status bar (black-translucent) i blokada auto-detekcji telefonów',
     ],
   },
+  {
+    version: '1.3.3',
+    changes: [
+      'Banner offline — komunikat „Brak połączenia z internetem" gdy nie ma sieci',
+    ],
+  },
 ];
