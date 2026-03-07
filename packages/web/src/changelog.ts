@@ -26,4 +26,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Dynamiczny kolor kropki karmy w karcie kolacji (zgodny z kategorią produktu)',
     ],
   },
+  {
+    version: '1.3.0',
+    changes: [
+      'Nowa strona Historia — wykresy dziennego spożycia (słupkowy) i wagi (liniowy)',
+      'Przełącznik kcal / gramy, filtrowanie po kategoriach jedzenia',
+      'Wybór zakresu dat: ostatnie 7/14/30 dni lub dowolny zakres',
+      'Menu „Admin" zastąpione menu „Więcej" (Historia, Koty, Produkty)',
+    ],
+  },
 ];
