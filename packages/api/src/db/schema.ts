@@ -7,12 +7,15 @@ import {
   numeric,
   date,
   timestamp,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 export const cats = pgTable('cats', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   dailyKcalTarget: integer('daily_kcal_target').notNull(),
+  targetWeightKg: numeric('target_weight_kg', { precision: 5, scale: 3 }),
+  photo: text('photo'),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -52,6 +55,22 @@ export const weightEntries = pgTable('weight_entries', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const dayNotes = pgTable(
+  'day_notes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    catId: uuid('cat_id')
+      .notNull()
+      .references(() => cats.id),
+    date: date('date').notNull(),
+    content: text('content').notNull().default(''),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    catDateUniq: unique('day_notes_cat_date_uniq').on(table.catId, table.date),
+  }),
+);
+
 export type Cat = typeof cats.$inferSelect;
 export type NewCat = typeof cats.$inferInsert;
 export type Food = typeof foods.$inferSelect;
@@ -60,3 +79,5 @@ export type FeedEntry = typeof feedEntries.$inferSelect;
 export type NewFeedEntry = typeof feedEntries.$inferInsert;
 export type WeightEntry = typeof weightEntries.$inferSelect;
 export type NewWeightEntry = typeof weightEntries.$inferInsert;
+export type DayNote = typeof dayNotes.$inferSelect;
+export type NewDayNote = typeof dayNotes.$inferInsert;

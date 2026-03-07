@@ -6,6 +6,8 @@ import { Cat, Food, DaySummary } from '../types';
 import { DaySummaryCard } from '../components/DaySummaryCard';
 import { FeedEntryList } from '../components/FeedEntryList';
 import { AddMealForm } from '../components/AddMealForm';
+import { WeeklySummaryCard } from '../components/WeeklySummaryCard';
+import { DayNoteInput } from '../components/DayNoteInput';
 
 function todayDate() {
   return new Date().toISOString().split('T')[0];
@@ -89,6 +91,9 @@ export function Today() {
             remainingKcal={summary.remainingKcal}
           />
 
+          {/* Weekly summary */}
+          {catId && <WeeklySummaryCard catId={catId} />}
+
           {/* Feed entries */}
           <div className="mb-4">
             <h2 className="text-sm font-semibold text-gray-500 mb-2">Posiłki dnia</h2>
@@ -105,6 +110,9 @@ export function Today() {
             onSubmit={(foodId, grams) => addMeal({ foodId, grams })}
             isLoading={addingMeal}
           />
+
+          {/* Day note */}
+          {catId && <DayNoteInput catId={catId} date={date} />}
 
           {/* Close day CTA */}
           <Link

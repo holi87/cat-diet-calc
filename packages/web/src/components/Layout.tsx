@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { CHANGELOG } from '../changelog';
 import { OfflineBanner } from './OfflineBanner';
 
-const APP_VERSION = '1.3.3';
+const APP_VERSION = '1.4.0';
 
 function useIosInstallBanner() {
   const [show, setShow] = useState(false);

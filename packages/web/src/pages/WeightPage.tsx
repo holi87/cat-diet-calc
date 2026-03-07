@@ -1,7 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts';
 import { apiGet, apiPost } from '../api/client';
 import { Cat, WeightEntry } from '../types';
+
+function formatDateLabel(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
+}
 
 export function WeightPage() {
   const qc = useQueryClient();
@@ -20,6 +35,7 @@ export function WeightPage() {
   }, [cats, selectedCatId]);
 
   const catId = selectedCatId ?? cats[0]?.id;
+  const selectedCat = cats.find((c) => c.id === catId);
 
   const { data: entries = [] } = useQuery<WeightEntry[]>({
     queryKey: ['weight-entries', catId],
@@ -36,6 +52,19 @@ export function WeightPage() {
     },
   });
 
+  const chartData = useMemo(() => {
+    if (entries.length === 0) return [];
+    return entries.map((e) => ({
+      fullDate: e.date,
+      label: formatDateLabel(e.date),
+      weightKg: parseFloat(e.weightKg),
+    }));
+  }, [entries]);
+
+  const targetWeightKg = selectedCat?.targetWeightKg
+    ? parseFloat(selectedCat.targetWeightKg)
+    : null;
+
   return (
     <div>
       <h2 className="text-base font-bold text-gray-700 mb-4">⚖️ Waga</h2>
@@ -48,6 +77,52 @@ export function WeightPage() {
         >
           {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+      )}
+
+      {/* Weight chart */}
+      {chartData.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Wykres wagi</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart
+              data={chartData}
+              margin={{ top: 5, right: 5, left: -15, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+              <YAxis
+                domain={['auto', 'auto']}
+                tick={{ fontSize: 10 }}
+                width={45}
+              />
+              <Tooltip
+                formatter={(value) => [`${Number(value ?? 0)} kg`, 'Waga']}
+                labelFormatter={(label) => String(label ?? '')}
+              />
+              {targetWeightKg && (
+                <ReferenceLine
+                  y={targetWeightKg}
+                  stroke="#22c55e"
+                  strokeDasharray="6 4"
+                  label={{
+                    value: `Cel: ${targetWeightKg} kg`,
+                    position: 'right',
+                    fontSize: 10,
+                    fill: '#22c55e',
+                  }}
+                />
+              )}
+              <Line
+                type="monotone"
+                dataKey="weightKg"
+                stroke="#f97316"
+                strokeWidth={2}
+                dot={{ r: 4, fill: '#f97316' }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       )}
 
       <form

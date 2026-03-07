@@ -8,6 +8,13 @@
       "when": 1772397047520,
       "tag": "0000_flaky_prowler",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772922326905,
+      "tag": "0001_redundant_red_ghost",
+      "breakpoints": true
     }
   ]
 }

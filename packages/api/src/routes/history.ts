@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq, and, gte, lt, lte, sql as drizzleSql } from 'drizzle-orm';
-import { feedEntries, cats, foods, weightEntries } from '../db/schema';
+import { feedEntries, cats, foods, weightEntries, dayNotes } from '../db/schema';
 
 export async function historyRoutes(fastify: FastifyInstance) {
   const sqlClient = postgres(process.env.DATABASE_URL!);
@@ -69,6 +69,27 @@ export async function historyRoutes(fastify: FastifyInstance) {
         )
         .orderBy(weightEntries.date);
 
+      // Day notes in range
+      const notesRows = await db
+        .select({
+          date: dayNotes.date,
+          content: dayNotes.content,
+        })
+        .from(dayNotes)
+        .where(
+          and(
+            eq(dayNotes.catId, catId),
+            gte(dayNotes.date, from),
+            lte(dayNotes.date, to),
+          ),
+        )
+        .orderBy(dayNotes.date);
+
+      const notes: Record<string, string> = {};
+      for (const n of notesRows) {
+        if (n.content) notes[n.date] = n.content;
+      }
+
       // Build day map with all dates in range (fill gaps)
       const dayMap = new Map<string, { category: string; kcal: number; grams: number }[]>();
 
@@ -105,11 +126,13 @@ export async function historyRoutes(fastify: FastifyInstance) {
         from,
         to,
         dailyKcalTarget: cat.dailyKcalTarget,
+        targetWeightKg: cat.targetWeightKg ? parseFloat(cat.targetWeightKg) : null,
         days,
         weights: weights.map((w) => ({
           date: w.date,
           weightKg: parseFloat(w.weightKg),
         })),
+        notes,
       });
     },
   );

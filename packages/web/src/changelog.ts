@@ -56,4 +56,14 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Banner offline — komunikat „Brak połączenia z internetem" gdy nie ma sieci',
     ],
   },
+  {
+    version: '1.4.0',
+    changes: [
+      'Podsumowanie tygodnia — karta ze średnią kcal/dzień, dniami ponad limit i trendem',
+      'Notatki dzienne — pole tekstowe na stronie dnia z auto-zapisem',
+      'Zdjęcie kota — upload i podgląd w profilu kota (Base64)',
+      'Waga docelowa — pole w ustawieniach kota, linia celu na wykresach wagi',
+      'Eksport CSV — pobieranie danych z Historii jako plik CSV',
+    ],
+  },
 ];

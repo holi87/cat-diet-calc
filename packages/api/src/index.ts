@@ -6,6 +6,8 @@ import { daySummaryRoutes } from './routes/day-summary';
 import { closeDayRoutes } from './routes/close-day';
 import { weightRoutes } from './routes/weight';
 import { historyRoutes } from './routes/history';
+import { dayNotesRoutes } from './routes/day-notes';
+import { exportRoutes } from './routes/export';
 
 const fastify = Fastify({
   logger: {
@@ -30,6 +32,8 @@ fastify.register(daySummaryRoutes, { prefix: '/api' });
 fastify.register(closeDayRoutes, { prefix: '/api' });
 fastify.register(weightRoutes, { prefix: '/api' });
 fastify.register(historyRoutes, { prefix: '/api' });
+fastify.register(dayNotesRoutes, { prefix: '/api' });
+fastify.register(exportRoutes, { prefix: '/api' });
 
 // Error handler
 fastify.setErrorHandler((error, _req, reply) => {

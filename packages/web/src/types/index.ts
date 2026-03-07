@@ -4,6 +4,8 @@ export interface Cat {
   id: string;
   name: string;
   dailyKcalTarget: number;
+  targetWeightKg: string | null;
+  photo: string | null;
   active: boolean;
   createdAt: string;
 }
@@ -80,6 +82,16 @@ export interface DailyHistoryResponse {
   from: string;
   to: string;
   dailyKcalTarget: number;
+  targetWeightKg: number | null;
   days: DayAggregate[];
   weights: WeightPoint[];
+  notes: Record<string, string>;
+}
+
+export interface DayNote {
+  id: string;
+  catId: string;
+  date: string;
+  content: string;
+  updatedAt: string;
 }

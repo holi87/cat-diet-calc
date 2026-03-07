@@ -186,7 +186,22 @@ export function HistoryPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-gray-800 mb-4">Historia</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-gray-800">Historia</h2>
+        {catId && from && to && (
+          <button
+            onClick={() =>
+              window.open(
+                `/api/export/csv?catId=${catId}&from=${from}&to=${to}`,
+                '_blank',
+              )
+            }
+            className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+          >
+            📥 Eksport CSV
+          </button>
+        )}
+      </div>
 
       {/* Cat selector */}
       {cats.length > 1 && (
@@ -394,6 +409,19 @@ export function HistoryPage() {
                 formatter={(value) => [`${Number(value ?? 0)} kg`, 'Waga']}
                 labelFormatter={(label) => String(label ?? '')}
               />
+              {history?.targetWeightKg && (
+                <ReferenceLine
+                  y={history.targetWeightKg}
+                  stroke="#22c55e"
+                  strokeDasharray="6 4"
+                  label={{
+                    value: `Cel: ${history.targetWeightKg} kg`,
+                    position: 'right',
+                    fontSize: 10,
+                    fill: '#22c55e',
+                  }}
+                />
+              )}
               <Line
                 type="monotone"
                 dataKey="weightKg"
