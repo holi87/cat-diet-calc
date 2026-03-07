@@ -42,4 +42,12 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Naprawiony błąd kompilacji TypeScript blokujący build obrazu web',
     ],
   },
+  {
+    version: '1.3.2',
+    changes: [
+      'Splash screeny iOS dla wszystkich modeli iPhone i iPad',
+      'Dodatkowe rozmiary ikon Apple Touch (152px, 167px)',
+      'Ulepszony status bar (black-translucent) i blokada auto-detekcji telefonów',
+    ],
+  },
 ];
