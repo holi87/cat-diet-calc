@@ -35,4 +35,11 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Menu „Admin" zastąpione menu „Więcej" (Historia, Koty, Produkty)',
     ],
   },
+  {
+    version: '1.3.1',
+    changes: [
+      'Poprawka kompatybilności typów Tooltip dla Recharts 3.8 na stronie Historia',
+      'Naprawiony błąd kompilacji TypeScript blokujący build obrazu web',
+    ],
+  },
 ];

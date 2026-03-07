@@ -11,7 +11,9 @@ import {
   ReferenceLine,
   LineChart,
   Line,
-  TooltipProps,
+  TooltipContentProps,
+  TooltipPayloadEntry,
+  TooltipValueType,
 } from 'recharts';
 import { apiGet } from '../api/client';
 import { Cat, FoodCategory, DailyHistoryResponse } from '../types';
@@ -23,6 +25,10 @@ import {
 
 type Unit = 'kcal' | 'grams';
 type RangeMode = 'last' | 'custom';
+
+function isFoodCategory(value: unknown): value is FoodCategory {
+  return typeof value === 'string' && ALL_CATEGORIES.includes(value as FoodCategory);
+}
 
 function formatDateLabel(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00');
@@ -44,37 +50,47 @@ function HistoryTooltip({
   active,
   payload,
   unit,
-}: TooltipProps<number, string> & { unit: Unit }) {
+}: TooltipContentProps<TooltipValueType, string | number> & { unit: Unit }) {
   if (!active || !payload || payload.length === 0) return null;
 
-  const total = payload.reduce((s, p) => s + (Number(p.value) || 0), 0);
+  const items = payload as TooltipPayloadEntry<TooltipValueType, string | number>[];
+  const firstPayload = items[0]?.payload as { fullDate?: string } | undefined;
+
+  const total = items.reduce((s, p) => s + (Number(p.value) || 0), 0);
   const unitLabel = unit === 'kcal' ? 'kcal' : 'g';
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs">
       <div className="font-semibold text-gray-700 mb-1">
-        {payload[0]?.payload?.fullDate
-          ? new Date(payload[0].payload.fullDate + 'T12:00:00').toLocaleDateString('pl-PL', {
+        {firstPayload?.fullDate
+          ? new Date(firstPayload.fullDate + 'T12:00:00').toLocaleDateString('pl-PL', {
               weekday: 'short',
               day: 'numeric',
               month: 'short',
             })
           : ''}
       </div>
-      {payload
+      {items
         .filter((p) => (Number(p.value) || 0) > 0)
-        .map((p) => (
-          <div key={p.dataKey} className="flex items-center gap-2">
+        .map((p, idx) => {
+          const maybeCategory = p.dataKey;
+          const label = isFoodCategory(maybeCategory)
+            ? CATEGORY_LABELS[maybeCategory]
+            : String(p.name ?? p.dataKey ?? 'Pozycja');
+
+          return (
+            <div key={`${String(p.dataKey ?? p.name ?? idx)}-${idx}`} className="flex items-center gap-2">
             <span
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: p.color }}
             />
-            <span>{CATEGORY_LABELS[p.dataKey as FoodCategory]}</span>
+              <span>{label}</span>
             <span className="ml-auto font-medium">
               {Math.round((Number(p.value) || 0) * 10) / 10}
             </span>
           </div>
-        ))}
+          );
+        })}
       <div className="border-t border-gray-100 mt-1 pt-1 font-semibold text-gray-700">
         Razem: {Math.round(total * 10) / 10} {unitLabel}
       </div>
@@ -316,7 +332,9 @@ export function HistoryPage() {
                 width={45}
               />
               <Tooltip
-                content={(props) => <HistoryTooltip {...props} unit={unit} />}
+                content={(props: TooltipContentProps<TooltipValueType, string | number>) => (
+                  <HistoryTooltip {...props} unit={unit} />
+                )}
               />
               {unit === 'kcal' && history && (
                 <ReferenceLine
@@ -373,11 +391,8 @@ export function HistoryPage() {
                 width={45}
               />
               <Tooltip
-                formatter={(value: number) => [
-                  `${value} kg`,
-                  'Waga',
-                ]}
-                labelFormatter={(label: string) => label}
+                formatter={(value) => [`${Number(value ?? 0)} kg`, 'Waga']}
+                labelFormatter={(label) => String(label ?? '')}
               />
               <Line
                 type="monotone"
