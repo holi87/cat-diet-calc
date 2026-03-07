@@ -1,27 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Food } from '../types';
+import { CATEGORY_LABELS as categoryLabel, CATEGORY_BADGE_COLORS as categoryColor } from '../constants/categories';
 
 interface AddMealFormProps {
   foods: Food[];
   onSubmit: (foodId: string, grams: number) => void;
   isLoading?: boolean;
 }
-
-const categoryLabel: Record<string, string> = {
-  BASE: 'Baza',
-  KIBBLE: 'Karma',
-  WET_FOOD: 'Mokra',
-  MEAT: 'Mięso',
-  TREAT: 'Przysmak',
-};
-
-const categoryColor: Record<string, string> = {
-  BASE: 'text-green-700 bg-green-100',
-  KIBBLE: 'text-amber-800 bg-amber-100',
-  WET_FOOD: 'text-blue-700 bg-blue-100',
-  MEAT: 'text-red-700 bg-red-100',
-  TREAT: 'text-purple-700 bg-purple-100',
-};
 
 export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
   const [foodId, setFoodId] = useState('');

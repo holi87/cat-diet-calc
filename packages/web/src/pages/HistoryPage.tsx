@@ -1,0 +1,396 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  LineChart,
+  Line,
+  TooltipProps,
+} from 'recharts';
+import { apiGet } from '../api/client';
+import { Cat, FoodCategory, DailyHistoryResponse } from '../types';
+import {
+  CATEGORY_LABELS,
+  CATEGORY_CHART_COLORS,
+  ALL_CATEGORIES,
+} from '../constants/categories';
+
+type Unit = 'kcal' | 'grams';
+type RangeMode = 'last' | 'custom';
+
+function formatDateLabel(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
+}
+
+function todayStr(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function daysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n + 1);
+  return d.toISOString().split('T')[0];
+}
+
+// Custom tooltip for the stacked bar chart
+function HistoryTooltip({
+  active,
+  payload,
+  unit,
+}: TooltipProps<number, string> & { unit: Unit }) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const total = payload.reduce((s, p) => s + (Number(p.value) || 0), 0);
+  const unitLabel = unit === 'kcal' ? 'kcal' : 'g';
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs">
+      <div className="font-semibold text-gray-700 mb-1">
+        {payload[0]?.payload?.fullDate
+          ? new Date(payload[0].payload.fullDate + 'T12:00:00').toLocaleDateString('pl-PL', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            })
+          : ''}
+      </div>
+      {payload
+        .filter((p) => (Number(p.value) || 0) > 0)
+        .map((p) => (
+          <div key={p.dataKey} className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: p.color }}
+            />
+            <span>{CATEGORY_LABELS[p.dataKey as FoodCategory]}</span>
+            <span className="ml-auto font-medium">
+              {Math.round((Number(p.value) || 0) * 10) / 10}
+            </span>
+          </div>
+        ))}
+      <div className="border-t border-gray-100 mt-1 pt-1 font-semibold text-gray-700">
+        Razem: {Math.round(total * 10) / 10} {unitLabel}
+      </div>
+    </div>
+  );
+}
+
+export function HistoryPage() {
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+  const [rangeMode, setRangeMode] = useState<RangeMode>('last');
+  const [lastNDays, setLastNDays] = useState(14);
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [unit, setUnit] = useState<Unit>('kcal');
+  const [enabledCategories, setEnabledCategories] = useState<Set<FoodCategory>>(
+    new Set(ALL_CATEGORIES),
+  );
+
+  const { data: cats = [] } = useQuery<Cat[]>({
+    queryKey: ['cats'],
+    queryFn: () => apiGet<Cat[]>('/cats'),
+  });
+
+  useEffect(() => {
+    if (!selectedCatId && cats.length > 0) {
+      const active = cats.find((c) => c.active);
+      setSelectedCatId(active?.id ?? cats[0].id);
+    }
+  }, [cats, selectedCatId]);
+
+  const catId = selectedCatId ?? cats[0]?.id;
+
+  const { from, to } = useMemo(() => {
+    if (rangeMode === 'custom' && customFrom && customTo) {
+      return { from: customFrom, to: customTo };
+    }
+    return { from: daysAgo(lastNDays), to: todayStr() };
+  }, [rangeMode, lastNDays, customFrom, customTo]);
+
+  const { data: history, isLoading } = useQuery<DailyHistoryResponse>({
+    queryKey: ['history', catId, from, to],
+    queryFn: () =>
+      apiGet<DailyHistoryResponse>('/history/daily', {
+        catId: catId!,
+        from,
+        to,
+      }),
+    enabled: !!catId && !!from && !!to,
+    staleTime: 60_000,
+  });
+
+  const chartData = useMemo(() => {
+    if (!history) return [];
+    return history.days.map((day) => {
+      const row: Record<string, string | number> = {
+        fullDate: day.date,
+        label: formatDateLabel(day.date),
+      };
+      for (const cat of ALL_CATEGORIES) {
+        if (!enabledCategories.has(cat)) {
+          row[cat] = 0;
+          continue;
+        }
+        const found = day.categories.find((c) => c.category === cat);
+        row[cat] = found ? (unit === 'kcal' ? found.kcal : found.grams) : 0;
+      }
+      return row;
+    });
+  }, [history, unit, enabledCategories]);
+
+  const weightChartData = useMemo(() => {
+    if (!history?.weights || history.weights.length === 0) return [];
+    return history.weights.map((w) => ({
+      fullDate: w.date,
+      label: formatDateLabel(w.date),
+      weightKg: w.weightKg,
+    }));
+  }, [history]);
+
+  const toggleCategory = (cat: FoodCategory) => {
+    setEnabledCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) {
+        if (next.size > 1) next.delete(cat);
+      } else {
+        next.add(cat);
+      }
+      return next;
+    });
+  };
+
+  const activeCategories = ALL_CATEGORIES.filter((c) => enabledCategories.has(c));
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-gray-800 mb-4">Historia</h2>
+
+      {/* Cat selector */}
+      {cats.length > 1 && (
+        <select
+          value={catId ?? ''}
+          onChange={(e) => setSelectedCatId(e.target.value)}
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-brand-400"
+        >
+          {cats.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {/* Controls card */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
+        {/* Unit toggle */}
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          {(['kcal', 'grams'] as const).map((u) => (
+            <button
+              key={u}
+              onClick={() => setUnit(u)}
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
+                unit === u
+                  ? 'bg-white text-brand-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {u === 'kcal' ? 'Kalorie (kcal)' : 'Gramatura (g)'}
+            </button>
+          ))}
+        </div>
+
+        {/* Range mode toggle */}
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          {([
+            { key: 'last' as const, label: 'Ostatnie dni' },
+            { key: 'custom' as const, label: 'Zakres dat' },
+          ]).map((m) => (
+            <button
+              key={m.key}
+              onClick={() => setRangeMode(m.key)}
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
+                rangeMode === m.key
+                  ? 'bg-white text-brand-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Date range controls */}
+        {rangeMode === 'last' ? (
+          <div className="flex gap-2">
+            {[7, 14, 30].map((n) => (
+              <button
+                key={n}
+                onClick={() => setLastNDays(n)}
+                className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${
+                  lastNDays === n
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {n} dni
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+            <span className="text-gray-400 text-sm">—</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+          </div>
+        )}
+
+        {/* Category filter pills */}
+        <div className="flex flex-wrap gap-2">
+          {ALL_CATEGORIES.map((cat) => {
+            const active = enabledCategories.has(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => toggleCategory(cat)}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                  active
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{
+                    backgroundColor: active
+                      ? CATEGORY_CHART_COLORS[cat]
+                      : '#d1d5db',
+                  }}
+                />
+                {CATEGORY_LABELS[cat]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Loading state */}
+      {isLoading && (
+        <div className="text-center text-gray-400 py-8 text-sm">
+          Wczytywanie danych...
+        </div>
+      )}
+
+      {/* Stacked bar chart */}
+      {!isLoading && chartData.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Dzienne spożycie
+          </h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 10 }}
+                interval={chartData.length > 14 ? Math.floor(chartData.length / 7) - 1 : 0}
+              />
+              <YAxis
+                tick={{ fontSize: 10 }}
+                width={45}
+              />
+              <Tooltip
+                content={(props) => <HistoryTooltip {...props} unit={unit} />}
+              />
+              {unit === 'kcal' && history && (
+                <ReferenceLine
+                  y={history.dailyKcalTarget}
+                  stroke="#d1d5db"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: 'Limit',
+                    position: 'right',
+                    fontSize: 10,
+                    fill: '#9ca3af',
+                  }}
+                />
+              )}
+              {activeCategories.map((cat, idx) => (
+                <Bar
+                  key={cat}
+                  dataKey={cat}
+                  stackId="a"
+                  fill={CATEGORY_CHART_COLORS[cat]}
+                  radius={
+                    idx === activeCategories.length - 1 ? [2, 2, 0, 0] : undefined
+                  }
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!isLoading && chartData.length > 0 && chartData.every((d) =>
+        ALL_CATEGORIES.every((c) => (d[c] as number) === 0),
+      ) && (
+        <div className="text-center text-gray-400 py-4 text-sm">
+          Brak danych w wybranym zakresie
+        </div>
+      )}
+
+      {/* Weight chart */}
+      {!isLoading && weightChartData.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Waga</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart
+              data={weightChartData}
+              margin={{ top: 5, right: 5, left: -15, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+              <YAxis
+                domain={['auto', 'auto']}
+                tick={{ fontSize: 10 }}
+                width={45}
+              />
+              <Tooltip
+                formatter={(value: number) => [
+                  `${value} kg`,
+                  'Waga',
+                ]}
+                labelFormatter={(label: string) => label}
+              />
+              <Line
+                type="monotone"
+                dataKey="weightKg"
+                stroke="#f97316"
+                strokeWidth={2}
+                dot={{ r: 4, fill: '#f97316' }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+}

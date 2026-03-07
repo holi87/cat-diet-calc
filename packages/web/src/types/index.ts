@@ -56,3 +56,30 @@ export interface WeightEntry {
   note: string | null;
   createdAt: string;
 }
+
+export interface CategoryAggregate {
+  category: FoodCategory;
+  kcal: number;
+  grams: number;
+}
+
+export interface DayAggregate {
+  date: string;
+  categories: CategoryAggregate[];
+  totalKcal: number;
+  totalGrams: number;
+}
+
+export interface WeightPoint {
+  date: string;
+  weightKg: number;
+}
+
+export interface DailyHistoryResponse {
+  catId: string;
+  from: string;
+  to: string;
+  dailyKcalTarget: number;
+  days: DayAggregate[];
+  weights: WeightPoint[];
+}

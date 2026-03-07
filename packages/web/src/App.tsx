@@ -6,6 +6,7 @@ import { CloseDayPage } from './pages/CloseDayPage';
 import { CatsAdmin } from './pages/CatsAdmin';
 import { FoodsAdmin } from './pages/FoodsAdmin';
 import { WeightPage } from './pages/WeightPage';
+import { HistoryPage } from './pages/HistoryPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ function App() {
             <Route path="/admin/cats" element={<CatsAdmin />} />
             <Route path="/admin/foods" element={<FoodsAdmin />} />
             <Route path="/weight" element={<WeightPage />} />
+            <Route path="/history" element={<HistoryPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>

@@ -1,20 +1,5 @@
 import { FeedEntry, FoodCategory } from '../types';
-
-const categoryColor: Record<FoodCategory, string> = {
-  BASE: 'bg-green-500',
-  KIBBLE: 'bg-amber-700',
-  WET_FOOD: 'bg-blue-500',
-  MEAT: 'bg-red-500',
-  TREAT: 'bg-orange-400',
-};
-
-const categoryLabel: Record<FoodCategory, string> = {
-  BASE: 'Baza',
-  KIBBLE: 'Karma',
-  WET_FOOD: 'Mokra',
-  MEAT: 'Mięso',
-  TREAT: 'Przysmak',
-};
+import { CATEGORY_DOT_COLORS as categoryColor, CATEGORY_LABELS as categoryLabel } from '../constants/categories';
 
 interface FeedEntryListProps {
   entries: FeedEntry[];
