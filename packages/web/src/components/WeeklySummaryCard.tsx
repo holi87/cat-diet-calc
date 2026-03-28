@@ -90,13 +90,13 @@ export function WeeklySummaryCard({ catId }: WeeklySummaryCardProps) {
           : '';
 
   return (
-    <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-4">
-      <h3 className="text-xs font-semibold text-gray-400 mb-2">Ostatnie 7 dni</h3>
+    <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 mb-4">
+      <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2">Ostatnie 7 dni</h3>
       <div className="flex items-center justify-between gap-3">
         {/* Average kcal */}
         <div className="text-center flex-1">
-          <div className="text-lg font-bold text-gray-800">{stats.avgKcal}</div>
-          <div className="text-[10px] text-gray-400">śr. kcal/dzień</div>
+          <div className="text-lg font-bold text-gray-800 dark:text-gray-100">{stats.avgKcal}</div>
+          <div className="text-[10px] text-gray-400 dark:text-gray-500">śr. kcal/dzień</div>
         </div>
 
         {/* Days over limit */}
@@ -108,14 +108,14 @@ export function WeeklySummaryCard({ catId }: WeeklySummaryCardProps) {
           >
             {stats.overDays}/{stats.daysCount}
           </div>
-          <div className="text-[10px] text-gray-400">ponad limit</div>
+          <div className="text-[10px] text-gray-400 dark:text-gray-500">ponad limit</div>
         </div>
 
         {/* Trend */}
         {stats.trend && (
           <div className="text-center flex-1">
             <div className="text-lg">{trendIcon}</div>
-            <div className="text-[10px] text-gray-400">{trendLabel}</div>
+            <div className="text-[10px] text-gray-400 dark:text-gray-500">{trendLabel}</div>
           </div>
         )}
       </div>

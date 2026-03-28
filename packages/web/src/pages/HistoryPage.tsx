@@ -60,8 +60,8 @@ function HistoryTooltip({
   const unitLabel = unit === 'kcal' ? 'kcal' : 'g';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs">
-      <div className="font-semibold text-gray-700 mb-1">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-xs">
+      <div className="font-semibold text-gray-700 dark:text-gray-200 mb-1">
         {firstPayload?.fullDate
           ? new Date(firstPayload.fullDate + 'T12:00:00').toLocaleDateString('pl-PL', {
               weekday: 'short',
@@ -91,7 +91,7 @@ function HistoryTooltip({
           </div>
           );
         })}
-      <div className="border-t border-gray-100 mt-1 pt-1 font-semibold text-gray-700">
+      <div className="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1 font-semibold text-gray-700 dark:text-gray-200">
         Razem: {Math.round(total * 10) / 10} {unitLabel}
       </div>
     </div>
@@ -187,7 +187,7 @@ export function HistoryPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-800">Historia</h2>
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Historia</h2>
         {catId && from && to && (
           <button
             onClick={() =>
@@ -208,7 +208,7 @@ export function HistoryPage() {
         <select
           value={catId ?? ''}
           onChange={(e) => setSelectedCatId(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-brand-400"
+          className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 mb-4 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
         >
           {cats.map((c) => (
             <option key={c.id} value={c.id}>
@@ -219,17 +219,17 @@ export function HistoryPage() {
       )}
 
       {/* Controls card */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 p-4 mb-4 space-y-3">
         {/* Unit toggle */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {(['kcal', 'grams'] as const).map((u) => (
             <button
               key={u}
               onClick={() => setUnit(u)}
               className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
                 unit === u
-                  ? 'bg-white text-brand-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white dark:bg-gray-600 text-brand-600 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               {u === 'kcal' ? 'Kalorie (kcal)' : 'Gramatura (g)'}
@@ -238,7 +238,7 @@ export function HistoryPage() {
         </div>
 
         {/* Range mode toggle */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {([
             { key: 'last' as const, label: 'Ostatnie dni' },
             { key: 'custom' as const, label: 'Zakres dat' },
@@ -248,8 +248,8 @@ export function HistoryPage() {
               onClick={() => setRangeMode(m.key)}
               className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
                 rangeMode === m.key
-                  ? 'bg-white text-brand-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white dark:bg-gray-600 text-brand-600 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               {m.label}
@@ -267,7 +267,7 @@ export function HistoryPage() {
                 className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${
                   lastNDays === n
                     ? 'bg-brand-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 {n} dni
@@ -280,14 +280,14 @@ export function HistoryPage() {
               type="date"
               value={customFrom}
               onChange={(e) => setCustomFrom(e.target.value)}
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="flex-1 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
             />
-            <span className="text-gray-400 text-sm">—</span>
+            <span className="text-gray-400 dark:text-gray-500 text-sm">—</span>
             <input
               type="date"
               value={customTo}
               onChange={(e) => setCustomTo(e.target.value)}
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="flex-1 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
             />
           </div>
         )}
@@ -302,8 +302,8 @@ export function HistoryPage() {
                 onClick={() => toggleCategory(cat)}
                 className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
                   active
-                    ? 'bg-gray-800 text-white'
-                    : 'bg-gray-100 text-gray-400'
+                    ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
                 }`}
               >
                 <span
@@ -323,15 +323,15 @@ export function HistoryPage() {
 
       {/* Loading state */}
       {isLoading && (
-        <div className="text-center text-gray-400 py-8 text-sm">
+        <div className="text-center text-gray-400 dark:text-gray-500 py-8 text-sm">
           Wczytywanie danych...
         </div>
       )}
 
       {/* Stacked bar chart */}
       {!isLoading && chartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 p-4 mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
             Dzienne spożycie
           </h3>
           <ResponsiveContainer width="100%" height={280}>
@@ -384,15 +384,15 @@ export function HistoryPage() {
       {!isLoading && chartData.length > 0 && chartData.every((d) =>
         ALL_CATEGORIES.every((c) => (d[c] as number) === 0),
       ) && (
-        <div className="text-center text-gray-400 py-4 text-sm">
+        <div className="text-center text-gray-400 dark:text-gray-500 py-4 text-sm">
           Brak danych w wybranym zakresie
         </div>
       )}
 
       {/* Weight chart */}
       {!isLoading && weightChartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Waga</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 p-4 mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Waga</h3>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart
               data={weightChartData}

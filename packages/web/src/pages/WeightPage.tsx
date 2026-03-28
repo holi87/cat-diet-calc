@@ -67,22 +67,26 @@ export function WeightPage() {
 
   return (
     <div>
-      <h2 className="text-base font-bold text-gray-700 mb-4">⚖️ Waga</h2>
+      <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 mb-4">⚖️ Waga</h2>
 
       {cats.length > 1 && (
-        <select
-          value={catId ?? ''}
-          onChange={(e) => setSelectedCatId(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white mb-4 focus:outline-none focus:ring-2 focus:ring-brand-400"
-        >
-          {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <div className="mb-4">
+          <label htmlFor="weight-cat-select" className="text-xs font-medium text-gray-500 dark:text-gray-400">Kot</label>
+          <select
+            id="weight-cat-select"
+            value={catId ?? ''}
+            onChange={(e) => setSelectedCatId(e.target.value)}
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+          >
+            {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
       )}
 
       {/* Weight chart */}
       {chartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Wykres wagi</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 p-4 mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Wykres wagi</h3>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart
               data={chartData}
@@ -127,31 +131,43 @@ export function WeightPage() {
 
       <form
         onSubmit={(e) => { e.preventDefault(); addWeight(); }}
-        className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3"
+        className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 p-4 mb-4 space-y-3"
       >
-        <h3 className="text-sm font-semibold text-gray-600">Dodaj pomiar</h3>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-        />
-        <input
-          type="number"
-          placeholder="Waga (kg)"
-          value={weightKg}
-          min={0.1}
-          step={0.01}
-          onChange={(e) => setWeightKg(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-        />
-        <input
-          type="text"
-          placeholder="Notatka (opcjonalnie)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-        />
+        <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">Dodaj pomiar</h3>
+        <div>
+          <label htmlFor="weight-date" className="text-xs font-medium text-gray-500 dark:text-gray-400">Data</label>
+          <input
+            id="weight-date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="weight-kg" className="text-xs font-medium text-gray-500 dark:text-gray-400">Waga (kg)</label>
+          <input
+            id="weight-kg"
+            type="number"
+            placeholder="np. 4.25"
+            value={weightKg}
+            min={0.1}
+            step={0.01}
+            onChange={(e) => setWeightKg(e.target.value)}
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="weight-note" className="text-xs font-medium text-gray-500 dark:text-gray-400">Notatka (opcjonalnie)</label>
+          <input
+            id="weight-note"
+            type="text"
+            placeholder="np. po jedzeniu"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+          />
+        </div>
         <button
           type="submit"
           disabled={!weightKg || isLoading}
@@ -163,13 +179,13 @@ export function WeightPage() {
 
       <div className="space-y-2">
         {entries.length === 0 ? (
-          <div className="text-center text-gray-400 py-6 text-sm">Brak pomiarów.</div>
+          <div className="text-center text-gray-400 dark:text-gray-500 py-6 text-sm">Brak pomiarów.</div>
         ) : (
           entries.map((e) => (
-            <div key={e.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex justify-between items-center">
+            <div key={e.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 px-4 py-3 flex justify-between items-center">
               <div>
-                <div className="font-semibold text-gray-800">{e.date}</div>
-                {e.note && <div className="text-xs text-gray-400">{e.note}</div>}
+                <div className="font-semibold text-gray-800 dark:text-gray-100">{e.date}</div>
+                {e.note && <div className="text-xs text-gray-400 dark:text-gray-500">{e.note}</div>}
               </div>
               <div className="text-xl font-bold text-brand-600">{e.weightKg} kg</div>
             </div>

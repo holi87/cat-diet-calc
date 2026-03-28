@@ -62,27 +62,35 @@ export function Today() {
       {/* Cat + date selectors */}
       <div className="flex gap-2 mb-4">
         {cats.length > 1 && (
-          <select
-            value={catId ?? ''}
-            onChange={(e) => setSelectedCatId(e.target.value)}
-            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
-          >
-            {cats.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <div className="flex-1">
+            <label htmlFor="cat-select" className="text-xs font-medium text-gray-500 dark:text-gray-400">Kot</label>
+            <select
+              id="cat-select"
+              value={catId ?? ''}
+              onChange={(e) => setSelectedCatId(e.target.value)}
+              className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+            >
+              {cats.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
         )}
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
-        />
+        <div>
+          <label htmlFor="date-picker" className="text-xs font-medium text-gray-500 dark:text-gray-400">Data</label>
+          <input
+            id="date-picker"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+          />
+        </div>
       </div>
 
       {/* Day summary */}
       {summaryLoading ? (
-        <div className="text-center text-gray-400 py-6">Ładowanie...</div>
+        <div className="text-center text-gray-400 dark:text-gray-500 py-6">Ładowanie...</div>
       ) : summary ? (
         <>
           <DaySummaryCard
@@ -96,7 +104,7 @@ export function Today() {
 
           {/* Feed entries */}
           <div className="mb-4">
-            <h2 className="text-sm font-semibold text-gray-500 mb-2">Posiłki dnia</h2>
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Posiłki dnia</h2>
             <FeedEntryList
               entries={summary.entries}
               onDelete={(id) => deleteEntry(id)}
@@ -123,7 +131,7 @@ export function Today() {
           </Link>
         </>
       ) : (
-        <div className="text-center text-gray-400 py-6">
+        <div className="text-center text-gray-400 dark:text-gray-500 py-6">
           {cats.length === 0 ? 'Dodaj kota w panelu Admin' : 'Wybierz kota'}
         </div>
       )}

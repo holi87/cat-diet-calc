@@ -32,13 +32,13 @@ export function CloseDayPage() {
 
   return (
     <div>
-      <h2 className="text-base font-bold text-gray-700 mb-4">🍽️ Domknięcie dnia</h2>
+      <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 mb-4">🍽️ Domknięcie dnia</h2>
 
       {cats.length > 1 && (
         <select
           value={catId ?? ''}
           onChange={(e) => setSelectedCatId(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white mb-4 focus:outline-none focus:ring-2 focus:ring-brand-400"
+          className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 mb-4 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
         >
           {cats.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
@@ -56,7 +56,7 @@ export function CloseDayPage() {
           <CloseDayCalc catId={catId} date={date} summary={summary} />
         </>
       ) : (
-        <div className="text-center text-gray-400 py-6">Ładowanie...</div>
+        <div className="text-center text-gray-400 dark:text-gray-500 py-6">Ładowanie...</div>
       )}
     </div>
   );

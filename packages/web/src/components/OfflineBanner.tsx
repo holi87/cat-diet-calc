@@ -19,7 +19,7 @@ export function OfflineBanner() {
   if (!offline) return null;
 
   return (
-    <div className="bg-red-500 text-white text-center text-xs font-semibold py-1.5 px-4">
+    <div className="bg-red-500 dark:bg-red-700 text-white text-center text-xs font-semibold py-1.5 px-4">
       📡 Brak połączenia z internetem
     </div>
   );

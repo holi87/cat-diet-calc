@@ -31,6 +31,9 @@
     <link rel="icon" href="/favicon.ico" />
 
     <title>CatCal</title>
+    <script>
+      (function(){var t=localStorage.getItem('catcal-theme');if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark')})();
+    </script>
   </head>
   <body>
     <div id="root"></div>

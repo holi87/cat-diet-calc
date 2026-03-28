@@ -4,7 +4,7 @@
 
 CatCal to prywatna aplikacja webowa do kontrolowania dziennej kaloryczności jedzenia kota.
 Aplikacja liczy kalorie, prowadzi dziennik posiłków i pomaga "domknąć dzień" kolacją.
-P
+
 ## Tech stack
 
 - **Frontend:** React + TypeScript + Vite + Tailwind CSS (SPA, docelowo PWA)
@@ -136,4 +136,4 @@ Zawsze sprawdź `docs/PLAN.md` przed rozpoczęciem pracy. Realizuj etapy po kole
 4. **Archiwizuj, nie usuwaj** — produkty i koty nigdy nie są kasowane z bazy
 5. **Karma standardowa** w MVP: 1 kcal = 1 g (100 kcal/100g), stała systemowa
 6. **Migracje** — każda zmiana schematu przez plik migracji Drizzle, nigdy ręcznie
-7. **Git** - po kazdej fazie, wiekszym kawalku kodu, rob commit i push na repo.
+7. **Git** — po każdej zmianie w kodzie wykonaj commit i push.

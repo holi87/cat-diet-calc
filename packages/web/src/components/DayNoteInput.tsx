@@ -76,12 +76,12 @@ export function DayNoteInput({ catId, date }: DayNoteInputProps) {
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-sm font-semibold text-gray-500">Notatka</h2>
+        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Notatka</h2>
         {saveStatus === 'saving' && (
-          <span className="text-[10px] text-gray-400">Zapisywanie...</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Zapisuję...</span>
         )}
         {saveStatus === 'saved' && (
-          <span className="text-[10px] text-green-500">Zapisano ✓</span>
+          <span className="text-xs text-green-600 font-medium">✓ Zapisano</span>
         )}
       </div>
       <textarea
@@ -89,7 +89,7 @@ export function DayNoteInput({ catId, date }: DayNoteInputProps) {
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Notatka na dziś..."
         rows={2}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
+        className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500 resize-none"
       />
     </div>
   );

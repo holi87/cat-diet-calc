@@ -45,12 +45,12 @@ function InfoModal({ onClose }: { onClose: () => void }) {
 
       {/* Card */}
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center"
+        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-5xl mb-3">🐱</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-1">CatCal</h2>
-        <p className="text-xs text-gray-400 mb-5">wersja {APP_VERSION}</p>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">CatCal</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-5">wersja {APP_VERSION}</p>
 
         <div className="bg-brand-50 rounded-xl px-5 py-4 mb-4">
           <p className="text-sm text-brand-700 font-medium leading-relaxed">
@@ -63,17 +63,17 @@ function InfoModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Changelog — ostatnie 3 wersje, od najnowszej */}
-        <div className="bg-gray-50 rounded-xl px-4 py-3 mb-5 text-left">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 mb-5 text-left">
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
             Historia zmian
           </p>
           <div className="max-h-40 overflow-y-auto space-y-3 pr-1">
             {[...CHANGELOG].reverse().slice(0, 3).map((entry) => (
               <div key={entry.version}>
-                <p className="text-xs font-semibold text-gray-500 mb-1">v{entry.version}</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">v{entry.version}</p>
                 <ul className="space-y-1">
                   {entry.changes.map((change, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                    <li key={i} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
                       <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
                       <span>{change}</span>
                     </li>
@@ -86,7 +86,7 @@ function InfoModal({ onClose }: { onClose: () => void }) {
 
         <button
           onClick={onClose}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm transition-colors"
+          className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-semibold py-2.5 rounded-xl text-sm transition-colors"
         >
           Zamknij
         </button>
@@ -98,22 +98,36 @@ function InfoModal({ onClose }: { onClose: () => void }) {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
+  const toggleTheme = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle('dark', next);
+    localStorage.setItem('catcal-theme', next ? 'dark' : 'light');
+  };
   const location = useLocation();
   const isMoreActive = moreNav.some((i) => location.pathname.startsWith(i.to));
   const { show: showIosBanner, dismiss: dismissIosBanner } = useIosInstallBanner();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col" onClick={() => setMoreOpen(false)}>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" onClick={() => setMoreOpen(false)}>
       {/* Offline banner */}
       <OfflineBanner />
 
       {/* Top bar */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-2 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-2 sticky top-0 z-10 shadow-sm dark:shadow-gray-900/30">
         <span className="text-2xl">🐱</span>
-        <h1 className="text-lg font-bold text-gray-800 flex-1">CatCal</h1>
+        <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex-1">CatCal</h1>
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-brand-500 hover:bg-brand-50 dark:text-gray-500 dark:hover:text-brand-400 dark:hover:bg-gray-700 transition-colors"
+          aria-label="Zmień motyw"
+        >
+          {dark ? '\u2600\uFE0F' : '\uD83C\uDF19'}
+        </button>
         <button
           onClick={(e) => { e.stopPropagation(); setInfoOpen(true); }}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-brand-500 hover:bg-brand-50 dark:text-gray-500 dark:hover:text-brand-400 dark:hover:bg-gray-700 transition-colors"
           aria-label="Informacje o aplikacji"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -127,7 +141,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
 
         {/* Footer version */}
-        <p className="text-center text-gray-300 text-xs mt-8 mb-2 select-none">
+        <p className="text-center text-gray-300 dark:text-gray-600 text-xs mt-8 mb-2 select-none">
           CatCal v{APP_VERSION}
         </p>
       </main>
@@ -135,17 +149,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* iOS PWA install banner */}
       {showIosBanner && (
         <div className="fixed bottom-16 left-0 right-0 z-20 px-4 pb-2">
-          <div className="max-w-lg mx-auto bg-white border border-gray-200 rounded-2xl shadow-lg px-4 py-3 flex items-start gap-3">
+          <div className="max-w-lg mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg px-4 py-3 flex items-start gap-3">
             <span className="text-3xl mt-0.5">🐱</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-800">Dodaj CatCal do ekranu głównego</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Dodaj CatCal do ekranu głównego</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Dotknij <span className="inline-block align-middle">⎙</span> „Udostępnij", a następnie „Dodaj do ekranu głównego"
               </p>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); dismissIosBanner(); }}
-              className="text-gray-400 hover:text-gray-600 text-lg leading-none mt-0.5 flex-shrink-0"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-lg leading-none mt-0.5 flex-shrink-0"
               aria-label="Zamknij"
             >
               ✕
@@ -155,10 +169,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-10" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {/* Admin dropup */}
         {moreOpen && (
-          <div className="absolute bottom-full right-0 mb-1 mr-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          <div className="absolute bottom-full right-0 mb-1 mr-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
             {moreNav.map((item) => (
               <NavLink
                 key={item.to}
@@ -166,7 +180,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 onClick={() => setMoreOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-5 py-3 text-sm font-medium transition-colors ${
-                    isActive ? 'text-brand-600 bg-brand-50' : 'text-gray-600 hover:bg-gray-50'
+                    isActive ? 'text-brand-600 bg-brand-50 dark:bg-brand-500/10' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`
                 }
               >
@@ -185,7 +199,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               end={item.to === '/'}
               className={({ isActive }) =>
                 `flex-1 flex flex-col items-center py-2 text-xs font-medium transition-colors ${
-                  isActive ? 'text-brand-600' : 'text-gray-500 hover:text-gray-700'
+                  isActive ? 'text-brand-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`
               }
             >
@@ -198,7 +212,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <button
             onClick={(e) => { e.stopPropagation(); setMoreOpen((o) => !o); }}
             className={`flex-1 flex flex-col items-center py-2 text-xs font-medium transition-colors ${
-              isMoreActive || moreOpen ? 'text-brand-600' : 'text-gray-500 hover:text-gray-700'
+              isMoreActive || moreOpen ? 'text-brand-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
             <span className="text-xl mb-0.5">📋</span>

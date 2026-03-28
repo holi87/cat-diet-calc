@@ -150,7 +150,7 @@ export function CatsAdmin() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-base font-bold text-gray-700">🐱 Koty</h2>
+        <h2 className="text-base font-bold text-gray-700 dark:text-gray-200">🐱 Koty</h2>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
           className="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
@@ -160,14 +160,14 @@ export function CatsAdmin() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-600">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 p-4 mb-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
             {editingCat ? 'Edytuj kota' : 'Nowy kot'}
           </h3>
 
           {/* Photo preview + upload */}
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 overflow-hidden flex items-center justify-center flex-shrink-0">
               {photoPreview ? (
                 <img src={photoPreview} alt="Zdjęcie kota" className="w-full h-full object-cover" />
               ) : (
@@ -202,7 +202,7 @@ export function CatsAdmin() {
             placeholder="Imię kota"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
           <input
             type="number"
@@ -210,7 +210,7 @@ export function CatsAdmin() {
             value={kcal}
             min={1}
             onChange={(e) => setKcal(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
           <input
             type="number"
@@ -219,7 +219,7 @@ export function CatsAdmin() {
             min={0.1}
             step={0.01}
             onChange={(e) => setTargetWeight(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
           <div className="flex gap-2">
             <button
@@ -232,7 +232,7 @@ export function CatsAdmin() {
             <button
               type="button"
               onClick={resetForm}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-2 rounded-lg text-sm"
+              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-semibold py-2 rounded-lg text-sm"
             >
               Anuluj
             </button>
@@ -241,13 +241,17 @@ export function CatsAdmin() {
       )}
 
       {isLoading ? (
-        <div className="text-center text-gray-400 py-6">Ładowanie...</div>
+        <div className="text-center text-gray-400 dark:text-gray-500 py-6">Ładowanie...</div>
       ) : cats.length === 0 ? (
-        <div className="text-center text-gray-400 py-6">Brak kotów. Dodaj pierwszego!</div>
+        <div className="text-center py-10">
+          <div className="text-4xl mb-2">🐱</div>
+          <div className="text-base text-gray-500 dark:text-gray-400 font-medium mb-1">Brak kotów</div>
+          <div className="text-sm text-gray-400 dark:text-gray-500">Kliknij „+ Dodaj kota" aby dodać pierwszego pupila</div>
+        </div>
       ) : (
         <div className="space-y-2">
           {cats.map((cat) => (
-            <div key={cat.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
+            <div key={cat.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 px-4 py-3">
               {confirmDeleteId === cat.id ? (
                 /* Second confirmation step */
                 <div className="flex items-center gap-2">
@@ -263,7 +267,7 @@ export function CatsAdmin() {
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(null)}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                    className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                   >
                     Anuluj
                   </button>
@@ -272,7 +276,7 @@ export function CatsAdmin() {
                 /* Normal row */
                 <div className="flex items-center gap-3">
                   {/* Cat avatar */}
-                  <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {cat.photo ? (
                       <img src={cat.photo} alt={cat.name} className="w-full h-full object-cover" />
                     ) : (
@@ -280,8 +284,8 @@ export function CatsAdmin() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-800">{cat.name}</div>
-                    <div className="text-xs text-gray-400">
+                    <div className="font-semibold text-gray-800 dark:text-gray-100">{cat.name}</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">
                       Limit: {cat.dailyKcalTarget} kcal/dzień
                       {cat.targetWeightKg && (
                         <span> · Cel: {parseFloat(cat.targetWeightKg)} kg</span>
@@ -291,7 +295,7 @@ export function CatsAdmin() {
                   <button
                     onClick={() => toggleActive(cat)}
                     className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
-                      cat.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      cat.active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                     }`}
                   >
                     {cat.active ? 'aktywny' : 'nieaktywny'}

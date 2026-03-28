@@ -53,25 +53,25 @@ function DinnerCard({
   });
 
   return (
-    <div className="bg-orange-50 rounded-xl border border-orange-100 shadow-sm px-4 py-3">
+    <div className="bg-brand-50/50 dark:bg-orange-900/30 rounded-xl border border-brand-100 dark:border-orange-800/40 shadow-sm dark:shadow-gray-900/30 px-4 py-3">
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-orange-400" />
-        <span className="font-semibold text-orange-800 text-sm flex-1">🍽️ Kolacja</span>
-        <span className="text-xs text-gray-400">{time}</span>
-        <span className="text-sm font-semibold text-orange-700">{totalKcal} kcal</span>
+        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-brand-400" />
+        <span className="font-semibold text-brand-800 text-sm flex-1">🍽️ Kolacja</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">{time}</span>
+        <span className="text-sm font-semibold text-brand-700">{totalKcal} kcal</span>
       </div>
 
       {/* Breakdown */}
       <div className="space-y-1 pl-4">
         {meatEntry && (
-          <div className="text-xs text-gray-600 flex items-center justify-between">
+          <div className="text-xs text-gray-600 dark:text-gray-300 flex items-center justify-between">
             <span>
               <span className="mr-1">🥩</span>
               {meatEntry.foodName ?? 'Dodatek'}: {parseFloat(meatEntry.grams)}g
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-gray-400">{parseFloat(meatEntry.kcalCalculated)} kcal</span>
+              <span className="text-gray-400 dark:text-gray-500">{parseFloat(meatEntry.kcalCalculated)} kcal</span>
               <button
                 onClick={() => {
                   if (window.confirm('Usunąć dodatek z kolacji?')) onDelete(meatEntry.id);
@@ -86,13 +86,13 @@ function DinnerCard({
           </div>
         )}
         {kibbleEntry && (
-          <div className="text-xs text-gray-600 flex items-center justify-between">
+          <div className="text-xs text-gray-600 dark:text-gray-300 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${categoryColor[(kibbleEntry.foodCategory ?? 'BASE') as FoodCategory]}`} />
               {kibbleEntry.foodName ?? 'Karma'}: {parseFloat(kibbleEntry.grams)}g
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-gray-400">{parseFloat(kibbleEntry.kcalCalculated)} kcal</span>
+              <span className="text-gray-400 dark:text-gray-500">{parseFloat(kibbleEntry.kcalCalculated)} kcal</span>
               <button
                 onClick={() => {
                   if (window.confirm('Usunąć karmę z kolacji?')) onDelete(kibbleEntry.id);
@@ -115,7 +115,7 @@ function DinnerCard({
 export function FeedEntryList({ entries, onDelete, isDeleting }: FeedEntryListProps) {
   if (entries.length === 0) {
     return (
-      <div className="text-center text-gray-400 py-8 text-sm">
+      <div className="text-center text-gray-400 dark:text-gray-500 py-8 text-sm">
         Brak posiłków. Dodaj pierwszy!
       </div>
     );
@@ -147,20 +147,20 @@ export function FeedEntryList({ entries, onDelete, isDeleting }: FeedEntryListPr
         return (
           <div
             key={entry.id}
-            className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3"
+            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 px-4 py-3 flex items-center gap-3"
           >
             <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${categoryColor[category]}`} />
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-gray-800 text-sm truncate">
+              <div className="font-medium text-gray-800 dark:text-gray-100 text-sm truncate">
                 {entry.foodName ?? 'Nieznany produkt'}
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-gray-400 dark:text-gray-500">
                 {categoryLabel[category]} · {time}
               </div>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="text-sm font-semibold text-gray-700">{parseFloat(entry.grams)}g</div>
-              <div className="text-xs text-gray-400">{parseFloat(entry.kcalCalculated)} kcal</div>
+              <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">{parseFloat(entry.grams)}g</div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">{parseFloat(entry.kcalCalculated)} kcal</div>
             </div>
             <button
               onClick={() => {
