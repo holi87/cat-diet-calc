@@ -54,11 +54,14 @@ export function WeightPage() {
 
   const chartData = useMemo(() => {
     if (entries.length === 0) return [];
-    return entries.map((e) => ({
-      fullDate: e.date,
-      label: formatDateLabel(e.date),
-      weightKg: parseFloat(e.weightKg),
-    }));
+    // entries arrive desc by date; chart needs asc (older left, newer right)
+    return [...entries]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((e) => ({
+        fullDate: e.date,
+        label: formatDateLabel(e.date),
+        weightKg: parseFloat(e.weightKg),
+      }));
   }, [entries]);
 
   const targetWeightKg = selectedCat?.targetWeightKg

@@ -144,6 +144,11 @@ export function FeedEntryList({ entries, onDelete, isDeleting }: FeedEntryListPr
           minute: '2-digit',
         });
 
+        const isPiece = entry.foodUnit === 'PIECE' && entry.pieces != null;
+        const amountLabel = isPiece
+          ? `${parseFloat(entry.pieces!)} szt.`
+          : `${parseFloat(entry.grams)}g`;
+
         return (
           <div
             key={entry.id}
@@ -159,7 +164,7 @@ export function FeedEntryList({ entries, onDelete, isDeleting }: FeedEntryListPr
               </div>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">{parseFloat(entry.grams)}g</div>
+              <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">{amountLabel}</div>
               <div className="text-xs text-gray-400 dark:text-gray-500">{parseFloat(entry.kcalCalculated)} kcal</div>
             </div>
             <button

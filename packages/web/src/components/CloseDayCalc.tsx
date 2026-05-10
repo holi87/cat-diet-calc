@@ -18,8 +18,9 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   });
 
   const activeFoods = foods.filter((f) => !f.archived);
-  const baseFoods = activeFoods.filter((f) => f.category === 'BASE');
-  const nonBaseFoods = activeFoods.filter((f) => f.category !== 'BASE');
+  // Close-day liczy gramy karmy → sztukowe produkty pomijamy
+  const baseFoods = activeFoods.filter((f) => f.category === 'BASE' && f.unit !== 'PIECE');
+  const nonBaseFoods = activeFoods.filter((f) => f.category !== 'BASE' && f.unit !== 'PIECE');
 
   // --- Auto-calc mode state ---
   const [meatFoodId, setMeatFoodId] = useState('');

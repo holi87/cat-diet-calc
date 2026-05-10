@@ -38,7 +38,9 @@ export async function exportRoutes(fastify: FastifyInstance) {
           datetime: feedEntries.datetime,
           foodName: foods.name,
           foodCategory: foods.category,
+          foodUnit: foods.unit,
           grams: feedEntries.grams,
+          pieces: feedEntries.pieces,
           kcalCalculated: feedEntries.kcalCalculated,
           note: feedEntries.note,
         })
@@ -63,17 +65,19 @@ export async function exportRoutes(fastify: FastifyInstance) {
       };
 
       // Build CSV
-      const header = 'Data,Godzina,Kategoria,Produkt,Gramy,Kcal,Notatka';
+      const header = 'Data,Godzina,Kategoria,Produkt,Gramy,Sztuki,Kcal,Notatka';
       const csvRows = rows.map((row) => {
         const dt = new Date(row.datetime);
         const dateStr = dt.toISOString().split('T')[0];
         const timeStr = dt.toTimeString().substring(0, 5);
         const category = categoryLabels[row.foodCategory ?? ''] ?? row.foodCategory ?? '';
         const name = escapeCsvField(row.foodName ?? '');
-        const grams = parseFloat(row.grams).toFixed(1);
+        const isPiece = row.foodUnit === 'PIECE' && row.pieces != null;
+        const grams = isPiece ? '' : parseFloat(row.grams).toFixed(1);
+        const pieces = isPiece ? parseFloat(row.pieces!).toFixed(2) : '';
         const kcal = parseFloat(row.kcalCalculated).toFixed(1);
         const note = escapeCsvField(row.note ?? '');
-        return `${dateStr},${timeStr},${category},${name},${grams},${kcal},${note}`;
+        return `${dateStr},${timeStr},${category},${name},${grams},${pieces},${kcal},${note}`;
       });
 
       // BOM + content for proper Excel encoding

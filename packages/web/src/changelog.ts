@@ -66,4 +66,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Eksport CSV — pobieranie danych z Historii jako plik CSV',
     ],
   },
+  {
+    version: '1.5.0',
+    changes: [
+      'Porcje sztukowe — produkt może mieć kalorie na sztukę zamiast na 100g (np. przysmaki)',
+      'Wybór jednostki przy dodawaniu produktu (gramy / sztuki) z osobnym polem kcal/szt.',
+      'Wykres wagi — chronologia naprawiona: starsze wpisy po lewej, nowsze po prawej',
+      'Eksport CSV — dodatkowa kolumna „Sztuki" obok „Gramy"',
+    ],
+  },
 ];

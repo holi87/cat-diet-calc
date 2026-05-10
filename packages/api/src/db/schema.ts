@@ -23,8 +23,10 @@ export const cats = pgTable('cats', {
 export const foods = pgTable('foods', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  category: text('category').notNull(), // KIBBLE | WET_FOOD | MEAT | TREAT
+  category: text('category').notNull(), // BASE | KIBBLE | WET_FOOD | MEAT | TREAT
   kcalPer100g: numeric('kcal_per_100g', { precision: 8, scale: 2 }).notNull(),
+  unit: text('unit').notNull().default('GRAM'), // GRAM | PIECE
+  kcalPerPiece: numeric('kcal_per_piece', { precision: 8, scale: 2 }),
   archived: boolean('archived').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -39,6 +41,7 @@ export const feedEntries = pgTable('feed_entries', {
     .notNull()
     .references(() => foods.id),
   grams: numeric('grams', { precision: 8, scale: 2 }).notNull(),
+  pieces: numeric('pieces', { precision: 8, scale: 2 }),
   kcalCalculated: numeric('kcal_calculated', { precision: 8, scale: 2 }).notNull(),
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

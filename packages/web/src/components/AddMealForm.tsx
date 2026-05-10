@@ -4,13 +4,13 @@ import { CATEGORY_LABELS as categoryLabel, CATEGORY_BADGE_COLORS as categoryColo
 
 interface AddMealFormProps {
   foods: Food[];
-  onSubmit: (foodId: string, grams: number) => void;
+  onSubmit: (data: { foodId: string; grams?: number; pieces?: number }) => void;
   isLoading?: boolean;
 }
 
 export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
   const [foodId, setFoodId] = useState('');
-  const [grams, setGrams] = useState('');
+  const [amount, setAmount] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -38,10 +38,13 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
   }, []);
 
   const selectedFood = activeFoods.find((f) => f.id === foodId);
-  const gramsNum = parseFloat(grams);
+  const isPiece = selectedFood?.unit === 'PIECE';
+  const amountNum = parseFloat(amount);
   const preview =
-    selectedFood && gramsNum > 0
-      ? Math.round(((gramsNum * parseFloat(selectedFood.kcalPer100g)) / 100) * 10) / 10
+    selectedFood && amountNum > 0
+      ? isPiece
+        ? Math.round(amountNum * parseFloat(selectedFood.kcalPerPiece ?? '0') * 10) / 10
+        : Math.round(((amountNum * parseFloat(selectedFood.kcalPer100g)) / 100) * 10) / 10
       : null;
 
   const getDefaultFoodId = () => {
@@ -53,15 +56,22 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!foodId || !gramsNum || gramsNum <= 0) return;
-    onSubmit(foodId, gramsNum);
-    setGrams('');
-    setFoodId(getDefaultFoodId()); // always reset to Karma standardowa
+    if (!foodId || !amountNum || amountNum <= 0) return;
+    if (isPiece) {
+      onSubmit({ foodId, pieces: amountNum });
+    } else {
+      onSubmit({ foodId, grams: amountNum });
+    }
+    setAmount('');
+    setFoodId(getDefaultFoodId());
   };
 
   const colorCls = selectedFood
     ? (categoryColor[selectedFood.category] ?? 'text-gray-600 bg-gray-100')
     : '';
+
+  const foodMeta = (f: Food) =>
+    f.unit === 'PIECE' ? `${f.kcalPerPiece ?? '?'} kcal/szt` : `${f.kcalPer100g} kcal/100g`;
 
   return (
     <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 p-4 space-y-3">
@@ -81,7 +91,7 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
               </span>
               <span className="flex-1 text-gray-800 dark:text-gray-100 font-medium">{selectedFood.name}</span>
               <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
-                {selectedFood.kcalPer100g} kcal/100g
+                {foodMeta(selectedFood)}
               </span>
             </>
           ) : (
@@ -102,7 +112,7 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
                 <button
                   key={f.id}
                   type="button"
-                  onClick={() => { setFoodId(f.id); setDropdownOpen(false); }}
+                  onClick={() => { setFoodId(f.id); setAmount(''); setDropdownOpen(false); }}
                   className={`w-full text-left px-3 py-2.5 flex items-center gap-2 transition-colors ${
                     isSelected ? 'bg-brand-50 dark:bg-brand-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
@@ -113,7 +123,7 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
                   <span className={`flex-1 text-sm ${isSelected ? 'text-brand-700 font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>
                     {f.name}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{f.kcalPer100g} kcal/100g</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{foodMeta(f)}</span>
                   {isSelected && <span className="text-brand-500 text-xs">✓</span>}
                 </button>
               );
@@ -122,16 +132,16 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
         )}
       </div>
 
-      {/* Grams + submit */}
+      {/* Amount + submit */}
       <div className="flex gap-2">
         <div className="flex-1">
           <input
             type="number"
-            placeholder="Gramatura (g)"
-            value={grams}
-            min={0.1}
-            step={0.1}
-            onChange={(e) => setGrams(e.target.value)}
+            placeholder={isPiece ? 'Liczba sztuk' : 'Gramatura (g)'}
+            value={amount}
+            min={isPiece ? 0.01 : 0.1}
+            step={isPiece ? 1 : 0.1}
+            onChange={(e) => setAmount(e.target.value)}
             className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
           {preview !== null && (
@@ -140,7 +150,7 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
         </div>
         <button
           type="submit"
-          disabled={!foodId || !gramsNum || gramsNum <= 0 || isLoading}
+          disabled={!foodId || !amountNum || amountNum <= 0 || isLoading}
           className="bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors"
         >
           {isLoading ? '…' : 'Dodaj'}

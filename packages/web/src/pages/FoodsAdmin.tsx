@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '../api/client';
-import { Food, FoodCategory } from '../types';
+import { Food, FoodCategory, FoodUnit } from '../types';
 import { CATEGORY_BADGE_COLORS, CATEGORY_LABELS } from '../constants/categories';
 
 const categories: { value: FoodCategory; label: string }[] = [
@@ -21,6 +21,8 @@ export function FoodsAdmin() {
   const [name, setName] = useState('');
   const [category, setCategory] = useState<FoodCategory>('KIBBLE');
   const [kcal, setKcal] = useState('');
+  const [unit, setUnit] = useState<FoodUnit>('GRAM');
+  const [kcalPerPiece, setKcalPerPiece] = useState('');
 
   const { data: foods = [], isLoading } = useQuery<Food[]>({
     queryKey: ['foods', { archived: showArchived }],
@@ -31,20 +33,33 @@ export function FoodsAdmin() {
     ? foods.filter((f) => f.category === filterCategory)
     : foods;
 
+  function buildPayload() {
+    const base: Record<string, unknown> = {
+      name,
+      category,
+      kcalPer100g: parseFloat(kcal || '0'),
+      unit,
+    };
+    base.kcalPerPiece = unit === 'PIECE' ? parseFloat(kcalPerPiece || '0') : null;
+    return base;
+  }
+
   const { mutate: createFood, isPending: creating } = useMutation({
-    mutationFn: () => apiPost('/foods', { name, category, kcalPer100g: parseFloat(kcal) }),
+    mutationFn: () => apiPost('/foods', buildPayload()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['foods'] });
-      setName(''); setKcal(''); setCategory('KIBBLE'); setShowForm(false);
+      resetForm();
+      setShowForm(false);
     },
   });
 
   const { mutate: updateFood, isPending: updating } = useMutation({
-    mutationFn: () =>
-      apiPut(`/foods/${editingFood!.id}`, { name, category, kcalPer100g: parseFloat(kcal) }),
+    mutationFn: () => apiPut(`/foods/${editingFood!.id}`, buildPayload()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['foods'] });
-      setEditingFood(null); setName(''); setKcal(''); setCategory('KIBBLE'); setShowForm(false);
+      setEditingFood(null);
+      resetForm();
+      setShowForm(false);
     },
   });
 
@@ -53,27 +68,50 @@ export function FoodsAdmin() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['foods'] }),
   });
 
+  function resetForm() {
+    setName('');
+    setKcal('');
+    setKcalPerPiece('');
+    setUnit('GRAM');
+    setCategory('KIBBLE');
+  }
+
   function startEdit(food: Food) {
     setEditingFood(food);
     setName(food.name);
     setCategory(food.category as FoodCategory);
     setKcal(food.kcalPer100g);
+    setUnit(food.unit ?? 'GRAM');
+    setKcalPerPiece(food.kcalPerPiece ?? '');
     setShowForm(true);
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name || !kcal) return;
+    if (!name) return;
+    if (unit === 'PIECE') {
+      if (!kcalPerPiece || parseFloat(kcalPerPiece) <= 0) return;
+    } else {
+      if (!kcal) return;
+    }
     if (editingFood) updateFood();
     else createFood();
   }
+
+  const submitDisabled =
+    !name ||
+    (unit === 'PIECE'
+      ? !kcalPerPiece || parseFloat(kcalPerPiece) <= 0
+      : !kcal) ||
+    creating ||
+    updating;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-base font-bold text-gray-700 dark:text-gray-200">⚙️ Produkty</h2>
         <button
-          onClick={() => { setShowForm(true); setEditingFood(null); setName(''); setKcal(''); setCategory('KIBBLE'); }}
+          onClick={() => { setShowForm(true); setEditingFood(null); resetForm(); }}
           className="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
         >
           + Dodaj
@@ -102,19 +140,54 @@ export function FoodsAdmin() {
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
-          <input
-            type="number"
-            placeholder="kcal / 100g"
-            value={kcal}
-            min={0}
-            step={0.1}
-            onChange={(e) => setKcal(e.target.value)}
-            className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
-          />
+
+          {/* Unit toggle */}
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            {([
+              { v: 'GRAM' as const, label: 'Na gramy' },
+              { v: 'PIECE' as const, label: 'Na sztuki' },
+            ]).map((u) => (
+              <button
+                type="button"
+                key={u.v}
+                onClick={() => setUnit(u.v)}
+                className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
+                  unit === u.v
+                    ? 'bg-white dark:bg-gray-600 text-brand-600 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                {u.label}
+              </button>
+            ))}
+          </div>
+
+          {unit === 'PIECE' ? (
+            <input
+              type="number"
+              placeholder="kcal / szt."
+              value={kcalPerPiece}
+              min={0}
+              step={0.1}
+              onChange={(e) => setKcalPerPiece(e.target.value)}
+              className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+            />
+          ) : (
+            <input
+              type="number"
+              placeholder="kcal / 100g"
+              value={kcal}
+              min={0}
+              step={0.1}
+              onChange={(e) => setKcal(e.target.value)}
+              className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
+            />
+          )}
+
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={!name || !kcal || creating || updating}
+              disabled={submitDisabled}
               className="flex-1 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white font-semibold py-2 rounded-lg text-sm"
             >
               {editingFood ? 'Zapisz' : 'Dodaj'}
@@ -176,7 +249,11 @@ export function FoodsAdmin() {
               </span>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-800 dark:text-gray-100 text-sm truncate">{food.name}</div>
-                <div className="text-xs text-gray-400 dark:text-gray-500">{food.kcalPer100g} kcal/100g</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">
+                  {food.unit === 'PIECE'
+                    ? `${food.kcalPerPiece ?? '?'} kcal/szt`
+                    : `${food.kcalPer100g} kcal/100g`}
+                </div>
               </div>
               {!food.archived && (
                 <>

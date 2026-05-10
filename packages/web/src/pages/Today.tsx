@@ -46,8 +46,8 @@ export function Today() {
 
   // Add meal
   const { mutate: addMeal, isPending: addingMeal } = useMutation({
-    mutationFn: ({ foodId, grams }: { foodId: string; grams: number }) =>
-      apiPost('/feed-entries', { catId, foodId, grams }),
+    mutationFn: (data: { foodId: string; grams?: number; pieces?: number }) =>
+      apiPost('/feed-entries', { catId, ...data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['day-summary', catId, date] }),
   });
 
@@ -115,7 +115,7 @@ export function Today() {
           {/* Add meal form */}
           <AddMealForm
             foods={foods}
-            onSubmit={(foodId, grams) => addMeal({ foodId, grams })}
+            onSubmit={(data) => addMeal(data)}
             isLoading={addingMeal}
           />
 

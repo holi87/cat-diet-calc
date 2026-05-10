@@ -14,7 +14,8 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
     Body: {
       catId: string;
       foodId: string;
-      grams: number;
+      grams?: number;
+      pieces?: number;
       datetime?: string;
       note?: string;
     };
@@ -24,11 +25,12 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
       schema: {
         body: {
           type: 'object',
-          required: ['catId', 'foodId', 'grams'],
+          required: ['catId', 'foodId'],
           properties: {
             catId: { type: 'string', format: 'uuid' },
             foodId: { type: 'string', format: 'uuid' },
             grams: { type: 'number', minimum: 0.1 },
+            pieces: { type: 'number', minimum: 0.01 },
             datetime: { type: 'string' },
             note: { type: 'string' },
           },
@@ -36,19 +38,40 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
       },
     },
     async (req, reply) => {
-      const { catId, foodId, grams, datetime, note } = req.body;
+      const { catId, foodId, grams, pieces, datetime, note } = req.body;
 
       const [food] = await db.select().from(foods).where(eq(foods.id, foodId));
       if (!food) return reply.code(404).send({ error: 'Food not found' });
 
-      const kcalCalculated = calculateKcal(grams, parseFloat(food.kcalPer100g));
+      let resolvedGrams: number;
+      let resolvedPieces: number | null = null;
+      let kcalCalculated: number;
+
+      if (food.unit === 'PIECE') {
+        if (pieces == null || pieces <= 0) {
+          return reply.code(400).send({ error: 'pieces is required for PIECE-unit food' });
+        }
+        if (food.kcalPerPiece == null) {
+          return reply.code(400).send({ error: 'food has no kcal_per_piece set' });
+        }
+        resolvedPieces = pieces;
+        resolvedGrams = 0;
+        kcalCalculated = Math.round(pieces * parseFloat(food.kcalPerPiece) * 10) / 10;
+      } else {
+        if (grams == null || grams <= 0) {
+          return reply.code(400).send({ error: 'grams is required for GRAM-unit food' });
+        }
+        resolvedGrams = grams;
+        kcalCalculated = calculateKcal(grams, parseFloat(food.kcalPer100g));
+      }
 
       const [entry] = await db
         .insert(feedEntries)
         .values({
           catId,
           foodId,
-          grams: String(grams),
+          grams: String(resolvedGrams),
+          pieces: resolvedPieces == null ? null : String(resolvedPieces),
           kcalCalculated: String(kcalCalculated),
           datetime: datetime ? new Date(datetime) : new Date(),
           note: note ?? null,

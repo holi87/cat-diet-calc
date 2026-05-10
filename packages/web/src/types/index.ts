@@ -1,4 +1,5 @@
 export type FoodCategory = 'BASE' | 'KIBBLE' | 'WET_FOOD' | 'MEAT' | 'TREAT';
+export type FoodUnit = 'GRAM' | 'PIECE';
 
 export interface Cat {
   id: string;
@@ -15,6 +16,8 @@ export interface Food {
   name: string;
   category: FoodCategory;
   kcalPer100g: string;
+  unit: FoodUnit;
+  kcalPerPiece: string | null;
   archived: boolean;
   createdAt: string;
 }
@@ -26,7 +29,9 @@ export interface FeedEntry {
   foodId: string;
   foodName: string | null;
   foodCategory: FoodCategory | null;
+  foodUnit: FoodUnit | null;
   grams: string;
+  pieces: string | null;
   kcalCalculated: string;
   note: string | null;
   createdAt: string;

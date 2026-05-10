@@ -4,6 +4,22 @@ import postgres from 'postgres';
 import { eq, and } from 'drizzle-orm';
 import { foods, NewFood } from '../db/schema';
 
+type FoodBody = {
+  name: string;
+  category: string;
+  kcalPer100g: number;
+  unit?: 'GRAM' | 'PIECE';
+  kcalPerPiece?: number | null;
+};
+
+const bodyProperties = {
+  name: { type: 'string', minLength: 1 },
+  category: { type: 'string', enum: ['BASE', 'KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
+  kcalPer100g: { type: 'number', minimum: 0 },
+  unit: { type: 'string', enum: ['GRAM', 'PIECE'] },
+  kcalPerPiece: { type: ['number', 'null'], minimum: 0 },
+};
+
 export async function foodsRoutes(fastify: FastifyInstance) {
   const sql = postgres(process.env.DATABASE_URL!);
   const db = drizzle(sql);
@@ -32,28 +48,33 @@ export async function foodsRoutes(fastify: FastifyInstance) {
   );
 
   // POST /api/foods
-  fastify.post<{ Body: Pick<NewFood, 'name' | 'category' | 'kcalPer100g'> }>(
+  fastify.post<{ Body: FoodBody }>(
     '/foods',
     {
       schema: {
         body: {
           type: 'object',
           required: ['name', 'category', 'kcalPer100g'],
-          properties: {
-            name: { type: 'string', minLength: 1 },
-            category: { type: 'string', enum: ['BASE', 'KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
-            kcalPer100g: { type: 'number', minimum: 0 },
-          },
+          properties: bodyProperties,
         },
       },
     },
     async (req, reply) => {
+      const unit = req.body.unit ?? 'GRAM';
+      if (unit === 'PIECE' && (req.body.kcalPerPiece == null || req.body.kcalPerPiece <= 0)) {
+        return reply.code(400).send({ error: 'kcalPerPiece is required for PIECE unit' });
+      }
       const [food] = await db
         .insert(foods)
         .values({
           name: req.body.name,
           category: req.body.category,
           kcalPer100g: String(req.body.kcalPer100g),
+          unit,
+          kcalPerPiece:
+            unit === 'PIECE' && req.body.kcalPerPiece != null
+              ? String(req.body.kcalPerPiece)
+              : null,
         })
         .returning();
       return reply.code(201).send(food);
@@ -63,7 +84,7 @@ export async function foodsRoutes(fastify: FastifyInstance) {
   // PUT /api/foods/:id
   fastify.put<{
     Params: { id: string };
-    Body: Partial<Pick<NewFood, 'name' | 'category' | 'kcalPer100g'>>;
+    Body: Partial<FoodBody>;
   }>(
     '/foods/:id',
     {
@@ -75,11 +96,7 @@ export async function foodsRoutes(fastify: FastifyInstance) {
         },
         body: {
           type: 'object',
-          properties: {
-            name: { type: 'string', minLength: 1 },
-            category: { type: 'string', enum: ['BASE', 'KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
-            kcalPer100g: { type: 'number', minimum: 0 },
-          },
+          properties: bodyProperties,
         },
       },
     },
@@ -89,6 +106,20 @@ export async function foodsRoutes(fastify: FastifyInstance) {
       if (req.body.category !== undefined) updateData.category = req.body.category;
       if (req.body.kcalPer100g !== undefined)
         updateData.kcalPer100g = String(req.body.kcalPer100g);
+      if (req.body.unit !== undefined) updateData.unit = req.body.unit;
+      if (req.body.kcalPerPiece !== undefined) {
+        updateData.kcalPerPiece =
+          req.body.kcalPerPiece == null ? null : String(req.body.kcalPerPiece);
+      }
+      // If switching to PIECE, ensure kcal_per_piece is set
+      if (updateData.unit === 'PIECE') {
+        const existingPiece =
+          updateData.kcalPerPiece ??
+          (await db.select().from(foods).where(eq(foods.id, req.params.id)))[0]?.kcalPerPiece;
+        if (existingPiece == null || parseFloat(String(existingPiece)) <= 0) {
+          return reply.code(400).send({ error: 'kcalPerPiece is required for PIECE unit' });
+        }
+      }
 
       const [food] = await db
         .update(foods)
