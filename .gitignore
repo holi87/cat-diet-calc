@@ -8,6 +8,7 @@ work.md
 node_modules/
 dist/
 build/
+*.tsbuildinfo
 
 # macOS
 .DS_Store
