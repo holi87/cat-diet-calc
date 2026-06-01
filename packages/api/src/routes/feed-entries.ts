@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq } from 'drizzle-orm';
 import { feedEntries, foods } from '../db/schema';
-import { calculateKcal } from '../lib/calc';
+import { resolveFeedEntryAmount, type ResolvedFeedEntryAmount } from '../lib/feed-entry';
 
 export async function feedEntriesRoutes(fastify: FastifyInstance) {
   const sql = postgres(process.env.DATABASE_URL!);
@@ -43,26 +43,11 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
       const [food] = await db.select().from(foods).where(eq(foods.id, foodId));
       if (!food) return reply.code(404).send({ error: 'Food not found' });
 
-      let resolvedGrams: number;
-      let resolvedPieces: number | null = null;
-      let kcalCalculated: number;
-
-      if (food.unit === 'PIECE') {
-        if (pieces == null || pieces <= 0) {
-          return reply.code(400).send({ error: 'pieces is required for PIECE-unit food' });
-        }
-        if (food.kcalPerPiece == null) {
-          return reply.code(400).send({ error: 'food has no kcal_per_piece set' });
-        }
-        resolvedPieces = pieces;
-        resolvedGrams = 0;
-        kcalCalculated = Math.round(pieces * parseFloat(food.kcalPerPiece) * 10) / 10;
-      } else {
-        if (grams == null || grams <= 0) {
-          return reply.code(400).send({ error: 'grams is required for GRAM-unit food' });
-        }
-        resolvedGrams = grams;
-        kcalCalculated = calculateKcal(grams, parseFloat(food.kcalPer100g));
+      let resolvedAmount: ResolvedFeedEntryAmount;
+      try {
+        resolvedAmount = resolveFeedEntryAmount(food, { grams, pieces });
+      } catch (error) {
+        return reply.code(400).send({ error: (error as Error).message });
       }
 
       const [entry] = await db
@@ -70,9 +55,9 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
         .values({
           catId,
           foodId,
-          grams: String(resolvedGrams),
-          pieces: resolvedPieces == null ? null : String(resolvedPieces),
-          kcalCalculated: String(kcalCalculated),
+          grams: String(resolvedAmount.grams),
+          pieces: resolvedAmount.pieces == null ? null : String(resolvedAmount.pieces),
+          kcalCalculated: String(resolvedAmount.kcalCalculated),
           datetime: datetime ? new Date(datetime) : new Date(),
           note: note ?? null,
         })

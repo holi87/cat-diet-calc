@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Food } from '../types';
 import { CATEGORY_LABELS as categoryLabel, CATEGORY_BADGE_COLORS as categoryColor } from '../constants/categories';
+import { getMealAmountInputConfig } from '../lib/mealAmount';
 
 interface AddMealFormProps {
   foods: Food[];
@@ -39,6 +40,7 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
 
   const selectedFood = activeFoods.find((f) => f.id === foodId);
   const isPiece = selectedFood?.unit === 'PIECE';
+  const amountInputConfig = getMealAmountInputConfig(selectedFood?.unit);
   const amountNum = parseFloat(amount);
   const preview =
     selectedFood && amountNum > 0
@@ -137,10 +139,11 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
         <div className="flex-1">
           <input
             type="number"
-            placeholder={isPiece ? 'Liczba sztuk' : 'Gramatura (g)'}
+            placeholder={amountInputConfig.placeholder}
             value={amount}
-            min={isPiece ? 0.01 : 0.1}
-            step={isPiece ? 1 : 0.1}
+            min={amountInputConfig.min}
+            step={amountInputConfig.step}
+            inputMode={amountInputConfig.inputMode}
             onChange={(e) => setAmount(e.target.value)}
             className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
