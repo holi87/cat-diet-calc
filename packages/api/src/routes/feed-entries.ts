@@ -1,13 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { eq } from 'drizzle-orm';
 import { feedEntries, foods } from '../db/schema';
+import { createDbClient } from '../db/client';
 import { resolveFeedEntryAmount, type ResolvedFeedEntryAmount } from '../lib/feed-entry';
 
 export async function feedEntriesRoutes(fastify: FastifyInstance) {
-  const sql = postgres(process.env.DATABASE_URL!);
-  const db = drizzle(sql);
+  const db = createDbClient(fastify);
 
   // POST /api/feed-entries
   fastify.post<{

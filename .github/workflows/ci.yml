@@ -12,6 +12,23 @@ jobs:
   api:
     name: API
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: catcal
+          POSTGRES_PASSWORD: catcal
+          POSTGRES_DB: catcal
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U catcal -d catcal"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://catcal:catcal@localhost:5432/catcal
+      NODE_ENV: test
     defaults:
       run:
         working-directory: packages/api

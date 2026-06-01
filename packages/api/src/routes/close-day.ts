@@ -1,15 +1,13 @@
 import { FastifyInstance } from 'fastify';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { eq, and, gte, lt } from 'drizzle-orm';
 import { feedEntries, cats, foods } from '../db/schema';
+import { createDbClient } from '../db/client';
 import { calculateCloseDay, calculateKcal } from '../lib/calc';
 
 const STANDARD_KIBBLE_KCAL = 100; // 1g = 1 kcal
 
 export async function closeDayRoutes(fastify: FastifyInstance) {
-  const sqlClient = postgres(process.env.DATABASE_URL!);
-  const db = drizzle(sqlClient);
+  const db = createDbClient(fastify);
 
   const bodySchema = {
     type: 'object',

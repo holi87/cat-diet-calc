@@ -1,12 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { eq, desc } from 'drizzle-orm';
 import { weightEntries, NewWeightEntry } from '../db/schema';
+import { createDbClient } from '../db/client';
 
 export async function weightRoutes(fastify: FastifyInstance) {
-  const sql = postgres(process.env.DATABASE_URL!);
-  const db = drizzle(sql);
+  const db = createDbClient(fastify);
 
   // GET /api/weight-entries?catId=...
   fastify.get<{ Querystring: { catId: string } }>(

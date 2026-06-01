@@ -1,12 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { eq } from 'drizzle-orm';
 import { cats, NewCat } from '../db/schema';
+import { createDbClient } from '../db/client';
 
 export async function catsRoutes(fastify: FastifyInstance) {
-  const sql = postgres(process.env.DATABASE_URL!);
-  const db = drizzle(sql);
+  const db = createDbClient(fastify);
 
   // Increase body limit for Base64 photo uploads
   fastify.addHook('onRoute', (routeOptions) => {

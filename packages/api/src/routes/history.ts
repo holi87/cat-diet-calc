@@ -1,12 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { eq, and, gte, lt, lte, sql as drizzleSql } from 'drizzle-orm';
 import { feedEntries, cats, foods, weightEntries, dayNotes } from '../db/schema';
+import { createDbClient } from '../db/client';
 
 export async function historyRoutes(fastify: FastifyInstance) {
-  const sqlClient = postgres(process.env.DATABASE_URL!);
-  const db = drizzle(sqlClient);
+  const db = createDbClient(fastify);
 
   // GET /api/history/daily?catId=...&from=YYYY-MM-DD&to=YYYY-MM-DD
   fastify.get<{ Querystring: { catId: string; from: string; to: string } }>(

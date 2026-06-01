@@ -1,12 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { eq, and, gte, lt } from 'drizzle-orm';
 import { feedEntries, foods, cats } from '../db/schema';
+import { createDbClient } from '../db/client';
 
 export async function exportRoutes(fastify: FastifyInstance) {
-  const sql = postgres(process.env.DATABASE_URL!);
-  const db = drizzle(sql);
+  const db = createDbClient(fastify);
 
   // GET /api/export/csv?catId=UUID&from=YYYY-MM-DD&to=YYYY-MM-DD
   fastify.get<{ Querystring: { catId: string; from: string; to: string } }>(

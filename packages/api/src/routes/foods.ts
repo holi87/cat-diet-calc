@@ -1,8 +1,7 @@
 import { FastifyInstance } from 'fastify';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { eq, and } from 'drizzle-orm';
 import { foods, NewFood } from '../db/schema';
+import { createDbClient } from '../db/client';
 
 type FoodBody = {
   name: string;
@@ -21,8 +20,7 @@ const bodyProperties = {
 };
 
 export async function foodsRoutes(fastify: FastifyInstance) {
-  const sql = postgres(process.env.DATABASE_URL!);
-  const db = drizzle(sql);
+  const db = createDbClient(fastify);
 
   // GET /api/foods
   fastify.get<{ Querystring: { category?: string; archived?: string } }>(
