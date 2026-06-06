@@ -8,6 +8,7 @@ import { weightRoutes } from './routes/weight';
 import { historyRoutes } from './routes/history';
 import { dayNotesRoutes } from './routes/day-notes';
 import { exportRoutes } from './routes/export';
+import { backupRoutes } from './routes/backup';
 
 export function buildApp() {
   const fastify = Fastify({
@@ -36,6 +37,7 @@ export function buildApp() {
   fastify.register(historyRoutes, { prefix: '/api' });
   fastify.register(dayNotesRoutes, { prefix: '/api' });
   fastify.register(exportRoutes, { prefix: '/api' });
+  fastify.register(backupRoutes, { prefix: '/api' });
 
   fastify.setErrorHandler((error, _req, reply) => {
     fastify.log.error(error);

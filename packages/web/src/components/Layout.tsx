@@ -32,6 +32,7 @@ const moreNav = [
   { to: '/history', label: 'Historia', icon: '📊' },
   { to: '/admin/cats', label: 'Koty', icon: '🐱' },
   { to: '/admin/foods', label: 'Produkty', icon: '🥩' },
+  { to: '/admin/data', label: 'Dane', icon: '💾' },
 ];
 
 function InfoModal({ onClose }: { onClose: () => void }) {

@@ -7,6 +7,7 @@ import { CatsAdmin } from './pages/CatsAdmin';
 import { FoodsAdmin } from './pages/FoodsAdmin';
 import { WeightPage } from './pages/WeightPage';
 import { HistoryPage } from './pages/HistoryPage';
+import { DataPage } from './pages/DataPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/admin/foods" element={<FoodsAdmin />} />
             <Route path="/weight" element={<WeightPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/admin/data" element={<DataPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>
