@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "tsx --test src/lib/*.test.ts",
-    "test:integration": "tsx --test src/test/*.test.ts",
+    "test:integration": "tsx --test --test-concurrency=1 src/test/*.test.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
     "db:generate": "drizzle-kit generate"
