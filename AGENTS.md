@@ -18,7 +18,7 @@ Aplikacja liczy kalorie, prowadzi dziennik posiłków i pomaga "domknąć dzień
 
 ```
 catcal/
-├── CLAUDE.md              ← ten plik (instrukcje dla Claude Code)
+├── AGENTS.md              ← ten plik (instrukcje dla agentów; CLAUDE.md = symlink → AGENTS.md)
 ├── docs/
 │   ├── ARCHITECTURE.md    ← architektura, model danych, API
 │   ├── FRONTEND.md        ← ekrany, komponenty, UX
@@ -137,6 +137,7 @@ Zawsze sprawdź `docs/PLAN.md` przed rozpoczęciem pracy. Realizuj etapy po kole
 5. **Karma standardowa** w MVP: 1 kcal = 1 g (100 kcal/100g), stała systemowa
 6. **Migracje** — każda zmiana schematu przez plik migracji Drizzle, nigdy ręcznie
 7. **Git** — po każdej zmianie w kodzie wykonaj commit i push.
+8. **Wersjonowanie** — każdy user-facing feature lub fix podbija wersję (`APP_VERSION` w `Layout.tsx`) i dodaje wpis do `CHANGELOG` w `changelog.ts`. Procedura i schemat: `docs/VERSIONING.md`.
 
 ## Git workflow
 
@@ -148,6 +149,7 @@ Każdy folder, który jest repo gita (`ls .git` zwraca obecny katalog), wymaga p
 4. `git push` (lub `git push -u origin <branch>` dla nowej gałęzi)
 
 Zasady:
+- **Każda nowa praca rusza ze świeżego `main`** — przed nową gałęzią: `git checkout main && git pull`, dopiero potem `git checkout -b <branch>`. Nigdy nie dokładaj nowych zmian do gałęzi z już zmergowanym PR.
 - Jeden temat = jeden commit. Nie mieszaj refactoru z fixem.
 - Wiadomość: po polsku lub angielsku zgodnie z konwencją repo.
 - Pre-commit hooki: jeśli failują — popraw przyczynę, nie skipuj `--no-verify`.
