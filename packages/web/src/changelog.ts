@@ -75,4 +75,12 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Eksport CSV — dodatkowa kolumna „Sztuki" obok „Gramy"',
     ],
   },
+  {
+    version: '1.6.0',
+    changes: [
+      'Eksport i import wszystkich danych do pliku JSON — pełny backup i przywracanie aplikacji',
+      'Nowa strona „Dane" w menu — pobieranie kopii i odtwarzanie z pliku',
+      'Poprawka dodawania przysmaków na sztuki — prawidłowe liczenie kalorii dla porcji sztukowych',
+    ],
+  },
 ];
