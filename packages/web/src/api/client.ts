@@ -38,3 +38,27 @@ export async function apiDelete<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' });
   return handleResponse<T>(res);
 }
+
+// Fetches an attachment and triggers a browser download. Filename comes from
+// the Content-Disposition header, with a fallback supplied by the caller.
+export async function apiDownload(path: string, fallbackName: string): Promise<void> {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error ?? `API error: ${res.status}`);
+  }
+
+  const disposition = res.headers.get('Content-Disposition') ?? '';
+  const match = disposition.match(/filename="?([^"]+)"?/);
+  const filename = match?.[1] ?? fallbackName;
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
