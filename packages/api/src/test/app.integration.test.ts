@@ -391,6 +391,101 @@ describe('API integration', integrationOptions, () => {
     assert.equal(ts < Date.parse('2026-06-01T22:00:00.000Z'), true);
   });
 
+  it('rejects a second close-day commit for the same day with 409', async () => {
+    const cat = await createCat({ dailyKcalTarget: 220 });
+    await createFood({ name: 'Baza', category: 'BASE', kcalPer100g: 100 });
+
+    const first = await app.inject({
+      method: 'POST',
+      url: '/api/close-day/commit',
+      payload: { catId: cat.id, date: '2026-06-01' },
+    });
+    assert.equal(first.statusCode, 201);
+
+    const second = await app.inject({
+      method: 'POST',
+      url: '/api/close-day/commit',
+      payload: { catId: cat.id, date: '2026-06-01' },
+    });
+    assert.equal(second.statusCode, 409);
+
+    // Another day for the same cat still commits fine
+    const otherDay = await app.inject({
+      method: 'POST',
+      url: '/api/close-day/commit',
+      payload: { catId: cat.id, date: '2026-06-02' },
+    });
+    assert.equal(otherDay.statusCode, 201);
+  });
+
+  it('rejects commit with 409 when kibble is needed but no kibble product exists', async () => {
+    const cat = await createCat({ dailyKcalTarget: 220 });
+    await createFood({ name: 'Królik', category: 'MEAT', kcalPer100g: 114 });
+
+    const committed = await app.inject({
+      method: 'POST',
+      url: '/api/close-day/commit',
+      payload: { catId: cat.id, date: '2026-06-01' },
+    });
+
+    assert.equal(committed.statusCode, 409);
+
+    const summary = await requestJson<DaySummaryResponse>({
+      method: 'GET',
+      url: `/api/day-summary?catId=${cat.id}&date=2026-06-01`,
+    });
+    assert.equal(summary.body.entries.length, 0);
+  });
+
+  it('falls back to an active KIBBLE product when no BASE food exists', async () => {
+    const cat = await createCat({ dailyKcalTarget: 220 });
+    const kibble = await createFood({ name: 'Karma sucha', category: 'KIBBLE', kcalPer100g: 100 });
+
+    const committed = await requestJson<{
+      savedEntries: Array<{ foodId?: string; note: string | null; grams: string }>;
+    }>({
+      method: 'POST',
+      url: '/api/close-day/commit',
+      payload: { catId: cat.id, date: '2026-06-01' },
+    });
+
+    assert.equal(committed.statusCode, 201);
+    assert.equal(committed.body.savedEntries.length, 1);
+    assert.equal(committed.body.savedEntries[0].note, 'kolacja:karma');
+    assert.equal(committed.body.savedEntries[0].foodId, kibble.id);
+  });
+
+  it('commits a manual dinner transactionally with explicit kibble grams', async () => {
+    const cat = await createCat({ dailyKcalTarget: 220 });
+    await createFood({ name: 'Baza', category: 'BASE', kcalPer100g: 120 });
+    const meatFood = await createFood({ name: 'Królik', category: 'MEAT', kcalPer100g: 114 });
+
+    const committed = await requestJson<{
+      kibbleGrams: number;
+      savedEntries: FeedEntryResponse[];
+    }>({
+      method: 'POST',
+      url: '/api/close-day/commit',
+      payload: {
+        catId: cat.id,
+        date: '2026-06-01',
+        meatFoodId: meatFood.id,
+        meatGrams: 40,
+        kibbleGrams: 30,
+      },
+    });
+
+    assert.equal(committed.statusCode, 201);
+    assert.equal(committed.body.kibbleGrams, 30);
+    assert.equal(committed.body.savedEntries.length, 2);
+    assert.equal(committed.body.savedEntries[0].note, 'kolacja:mięso');
+    assert.equal(committed.body.savedEntries[0].grams, '40.00');
+    assert.equal(committed.body.savedEntries[1].note, 'kolacja:karma');
+    assert.equal(committed.body.savedEntries[1].grams, '30.00');
+    // 30 g at 120 kcal/100g
+    assert.equal(committed.body.savedEntries[1].kcalCalculated, '36.00');
+  });
+
   it('stores and lists weight entries in newest-first order', async () => {
     const cat = await createCat();
     await createWeight({ catId: cat.id, date: '2026-06-01', weightKg: 4.2 });
