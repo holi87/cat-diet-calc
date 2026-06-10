@@ -4,14 +4,11 @@ import { apiGet } from '../api/client';
 import { Cat, DaySummary } from '../types';
 import { DaySummaryCard } from '../components/DaySummaryCard';
 import { CloseDayCalc } from '../components/CloseDayCalc';
-
-function todayDate() {
-  return new Date().toISOString().split('T')[0];
-}
+import { useCurrentDate } from '../lib/useCurrentDate';
 
 export function CloseDayPage() {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
-  const [date] = useState(todayDate());
+  const date = useCurrentDate();
 
   const { data: cats = [] } = useQuery<Cat[]>({
     queryKey: ['cats'],

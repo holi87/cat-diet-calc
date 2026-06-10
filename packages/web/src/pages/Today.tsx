@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { apiGet, apiPost, apiDelete } from '../api/client';
@@ -8,18 +8,27 @@ import { FeedEntryList } from '../components/FeedEntryList';
 import { AddMealForm } from '../components/AddMealForm';
 import { WeeklySummaryCard } from '../components/WeeklySummaryCard';
 import { DayNoteInput } from '../components/DayNoteInput';
-
-function todayDate() {
-  return new Date().toISOString().split('T')[0];
-}
+import { localDateStr } from '../lib/dates';
+import { useCurrentDate } from '../lib/useCurrentDate';
 
 export function Today() {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
-  const [date, setDate] = useState(todayDate());
+  const currentDay = useCurrentDate();
+  const [date, setDate] = useState(currentDay);
   const qc = useQueryClient();
 
+  // Follow the calendar day unless the user picked another date manually —
+  // a PWA resumed next morning must show the new day, not yesterday's.
+  const prevDayRef = useRef(currentDay);
+  useEffect(() => {
+    if (currentDay !== prevDayRef.current && date === prevDayRef.current) {
+      setDate(currentDay);
+    }
+    prevDayRef.current = currentDay;
+  }, [currentDay, date]);
+
   // Load cats
-  const { data: cats = [] } = useQuery<Cat[]>({
+  const { data: cats = [], isError: catsError } = useQuery<Cat[]>({
     queryKey: ['cats'],
     queryFn: () => apiGet<Cat[]>('/cats'),
   });
@@ -38,23 +47,34 @@ export function Today() {
   });
 
   // Load day summary
-  const { data: summary, isLoading: summaryLoading } = useQuery<DaySummary>({
+  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useQuery<DaySummary>({
     queryKey: ['day-summary', catId, date],
     queryFn: () => apiGet<DaySummary>('/day-summary', { catId: catId!, date }),
     enabled: !!catId,
   });
 
-  // Add meal
+  const invalidateDayData = () => {
+    qc.invalidateQueries({ queryKey: ['day-summary', catId, date] });
+    qc.invalidateQueries({ queryKey: ['history'] });
+  };
+
+  // Add meal — when browsing another day, the entry must land on that day
   const { mutate: addMeal, isPending: addingMeal } = useMutation({
     mutationFn: (data: { foodId: string; grams?: number; pieces?: number }) =>
-      apiPost('/feed-entries', { catId, ...data }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['day-summary', catId, date] }),
+      apiPost('/feed-entries', {
+        catId,
+        ...data,
+        ...(date === localDateStr()
+          ? {}
+          : { datetime: new Date(`${date}T12:00:00`).toISOString() }),
+      }),
+    onSuccess: invalidateDayData,
   });
 
   // Delete entry
   const { mutate: deleteEntry, isPending: deletingEntry } = useMutation({
     mutationFn: (id: string) => apiDelete(`/feed-entries/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['day-summary', catId, date] }),
+    onSuccess: invalidateDayData,
   });
 
   return (
@@ -91,6 +111,10 @@ export function Today() {
       {/* Day summary */}
       {summaryLoading ? (
         <div className="text-center text-gray-400 dark:text-gray-500 py-6">Ładowanie...</div>
+      ) : summaryError ? (
+        <div className="text-center text-red-500 py-6">
+          Nie udało się pobrać danych dnia. Spróbuj ponownie.
+        </div>
       ) : summary ? (
         <>
           <DaySummaryCard
@@ -132,7 +156,11 @@ export function Today() {
         </>
       ) : (
         <div className="text-center text-gray-400 dark:text-gray-500 py-6">
-          {cats.length === 0 ? 'Dodaj kota w panelu Admin' : 'Wybierz kota'}
+          {catsError
+            ? 'Nie udało się pobrać listy kotów. Sprawdź połączenie.'
+            : cats.length === 0
+              ? 'Dodaj kota w panelu Admin'
+              : 'Wybierz kota'}
         </div>
       )}
     </div>

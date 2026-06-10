@@ -2,24 +2,15 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '../api/client';
 import { DailyHistoryResponse } from '../types';
+import { daysAgo, localDateStr } from '../lib/dates';
 
 interface WeeklySummaryCardProps {
   catId: string;
 }
 
-function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n + 1);
-  return d.toISOString().split('T')[0];
-}
-
-function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
 export function WeeklySummaryCard({ catId }: WeeklySummaryCardProps) {
   const from = daysAgo(7);
-  const to = todayStr();
+  const to = localDateStr();
   const prevFrom = daysAgo(14);
   const prevTo = daysAgo(8);
 

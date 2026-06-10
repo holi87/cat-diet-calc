@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '../api/client';
 import { Food, DaySummary, CloseDayResult } from '../types';
+import { DecimalInput } from './DecimalInput';
 
 interface CloseDayCalcProps {
   catId: string;
@@ -74,6 +75,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
       setCommitted(true);
       setCalcResult(res);
       qc.invalidateQueries({ queryKey: ['day-summary', catId, date] });
+      qc.invalidateQueries({ queryKey: ['history'] });
     },
   });
 
@@ -121,6 +123,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
       setManualMeatGrams('');
       setManualError(null);
       qc.invalidateQueries({ queryKey: ['day-summary', catId, date] });
+      qc.invalidateQueries({ queryKey: ['history'] });
     },
     onError: (err) => {
       setManualError(
@@ -152,13 +155,10 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
           ))}
         </select>
         {meatFoodId && (
-          <input
-            type="number"
+          <DecimalInput
             placeholder="Gramatura dodatku (g)"
             value={meatGrams}
-            min={0.1}
-            step={0.1}
-            onChange={(e) => setMeatGrams(e.target.value)}
+            onValueChange={setMeatGrams}
             className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
         )}
@@ -279,26 +279,20 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
             ))}
           </select>
           {manualMeatFoodId && (
-            <input
-              type="number"
+            <DecimalInput
               placeholder="Gramatura dodatku (g)"
               value={manualMeatGrams}
-              min={0.1}
-              step={0.1}
-              onChange={(e) => setManualMeatGrams(e.target.value)}
+              onValueChange={setManualMeatGrams}
               className="mt-2 w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
             />
           )}
         </div>
 
         <div className="flex gap-2">
-          <input
-            type="number"
+          <DecimalInput
             placeholder="Karma standardowa (g)"
             value={manualKibbleGrams}
-            min={0.1}
-            step={0.1}
-            onChange={(e) => setManualKibbleGrams(e.target.value)}
+            onValueChange={setManualKibbleGrams}
             className="flex-1 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
           <button

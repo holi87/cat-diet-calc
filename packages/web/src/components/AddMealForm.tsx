@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Food } from '../types';
 import { CATEGORY_LABELS as categoryLabel, CATEGORY_BADGE_COLORS as categoryColor } from '../constants/categories';
 import { getMealAmountInputConfig } from '../lib/mealAmount';
+import { DecimalInput } from './DecimalInput';
 
 interface AddMealFormProps {
   foods: Food[];
@@ -137,14 +138,10 @@ export function AddMealForm({ foods, onSubmit, isLoading }: AddMealFormProps) {
       {/* Amount + submit */}
       <div className="flex gap-2">
         <div className="flex-1">
-          <input
-            type="number"
+          <DecimalInput
             placeholder={amountInputConfig.placeholder}
             value={amount}
-            min={amountInputConfig.min}
-            step={amountInputConfig.step}
-            inputMode={amountInputConfig.inputMode}
-            onChange={(e) => setAmount(e.target.value)}
+            onValueChange={setAmount}
             className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
           {preview !== null && (
