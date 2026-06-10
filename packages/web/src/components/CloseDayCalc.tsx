@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '../api/client';
 import { Food, DaySummary, CloseDayResult } from '../types';
 import { DecimalInput } from './DecimalInput';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 interface CloseDayCalcProps {
   catId: string;
@@ -28,7 +29,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   const [meatGrams, setMeatGrams] = useState('');
   const [kibbleFoodId, setKibbleFoodId] = useState('');
   const [committed, setCommitted] = useState(false);
-  const [calcResult, setCalcResult] = useState<CloseDayResult | null>(null);
+  const [commitResult, setCommitResult] = useState<CloseDayResult | null>(null);
 
   // Auto-select first BASE food when foods load
   useEffect(() => {
@@ -43,23 +44,22 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
   const [manualKibbleGrams, setManualKibbleGrams] = useState('');
   const [manualError, setManualError] = useState<string | null>(null);
 
-  // Recalculate on the fly (auto-calc mode)
-  const { mutate: calculate } = useMutation({
-    mutationFn: () =>
+  // Recalculate on the fly (auto-calc mode). useQuery instead of a mutation:
+  // React Query keys the request by its inputs, so a slow stale response can
+  // never overwrite a newer result; debounce keeps typing from spamming the API.
+  const debouncedMeatGrams = useDebouncedValue(meatGrams, 300);
+  const { data: calcData } = useQuery<CloseDayResult>({
+    queryKey: ['close-day-calc', catId, date, meatFoodId, debouncedMeatGrams, kibbleFoodId],
+    queryFn: () =>
       apiPost<CloseDayResult>('/close-day', {
         catId,
         date,
         ...(meatFoodId ? { meatFoodId } : {}),
-        meatGrams: parseFloat(meatGrams) || 0,
+        meatGrams: parseFloat(debouncedMeatGrams) || 0,
         ...(kibbleFoodId ? { kibbleFoodId } : {}),
       }),
-    onSuccess: setCalcResult,
+    enabled: !!catId,
   });
-
-  useEffect(() => {
-    calculate();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meatFoodId, meatGrams, kibbleFoodId]);
 
   // Auto-calc commit
   const { mutate: commit, isPending: committing } = useMutation({
@@ -73,7 +73,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
       }),
     onSuccess: (res) => {
       setCommitted(true);
-      setCalcResult(res);
+      setCommitResult(res);
       qc.invalidateQueries({ queryKey: ['day-summary', catId, date] });
       qc.invalidateQueries({ queryKey: ['history'] });
     },
@@ -87,35 +87,19 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
     (!!manualMeatFoodId && parseFloat(manualMeatGrams) > 0);
   const canSubmitManual = hasValidManualMeat && hasAnyManualEntry;
 
+  // One transactional request — a network failure can no longer leave a
+  // half-saved dinner (meat without kibble).
   const { mutate: addManual, isPending: addingManual } = useMutation({
-    mutationFn: async () => {
+    mutationFn: () => {
       setManualError(null);
-      const now = new Date();
-      const dinnerDatetime = now.toISOString();
-      const kibbleDatetime = new Date(now.getTime() + 60000).toISOString();
-
-      if (manualMeatFoodId && parseFloat(manualMeatGrams) > 0) {
-        await apiPost('/feed-entries', {
-          catId,
-          foodId: manualMeatFoodId,
-          grams: parseFloat(manualMeatGrams),
-          note: 'kolacja:mięso',
-          datetime: dinnerDatetime,
-        });
-      }
-
-      const kibbleGrams = parseFloat(manualKibbleGrams);
-      if (kibbleGrams > 0) {
-        const kibble = baseFoods[0] ?? foods.find((f) => f.category === 'KIBBLE' && !f.archived);
-        if (!kibble) throw new Error('Brak produktu karma bazowa w bazie');
-        await apiPost('/feed-entries', {
-          catId,
-          foodId: kibble.id,
-          grams: kibbleGrams,
-          note: 'kolacja:karma',
-          datetime: kibbleDatetime,
-        });
-      }
+      const hasMeat = manualMeatFoodId && parseFloat(manualMeatGrams) > 0;
+      return apiPost<CloseDayResult>('/close-day/commit', {
+        catId,
+        date,
+        ...(hasMeat ? { meatFoodId: manualMeatFoodId, meatGrams: parseFloat(manualMeatGrams) } : {}),
+        ...(kibbleFoodId ? { kibbleFoodId } : {}),
+        kibbleGrams: parseFloat(manualKibbleGrams) || 0,
+      });
     },
     onSuccess: () => {
       setManualKibbleGrams('');
@@ -132,7 +116,7 @@ export function CloseDayCalc({ catId, date }: CloseDayCalcProps) {
     },
   });
 
-  const r = calcResult;
+  const r = committed && commitResult ? commitResult : (calcData ?? null);
 
   return (
     <div className="space-y-4">
