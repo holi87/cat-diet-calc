@@ -17,73 +17,75 @@ Aplikacja liczy kalorie, prowadzi dziennik posiłków i pomaga "domknąć dzień
 ## Struktura repozytorium
 
 ```
-catcal/
+cat-diet/                  (repo: holi87/cat-diet-calc)
 ├── AGENTS.md              ← ten plik (instrukcje dla agentów; CLAUDE.md = symlink → AGENTS.md)
+├── README.md              ← szybki start, porty, testy
+├── .github/
+│   ├── workflows/ci.yml   ← CI: testy API (z Postgresem), testy+lint web, build obrazów Docker
+│   └── dependabot.yml
 ├── docs/
 │   ├── ARCHITECTURE.md    ← architektura, model danych, API
 │   ├── FRONTEND.md        ← ekrany, komponenty, UX
-│   ├── PLAN.md            ← plan wdrożenia krok po kroku
+│   ├── PLAN.md            ← plan wdrożenia (HISTORYCZNY — zrealizowany, nie odhaczany)
 │   ├── DATABASE.md        ← baza produkcyjna, migracje, backup
 │   ├── DEPLOYMENT.md      ← jak deployować, porty, rollback
-│   └── VERSIONING.md      ← wersjonowanie, changelog, konwencje git
+│   ├── VERSIONING.md      ← wersjonowanie, changelog, konwencje git
+│   └── PWA-TRAEFIK-GUIDE.md
 ├── docker-compose.yml
 ├── packages/
 │   ├── api/               ← backend Fastify
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   ├── Dockerfile
+│   │   ├── package.json / tsconfig.json / Dockerfile / .dockerignore
 │   │   ├── drizzle.config.ts
+│   │   ├── drizzle/               ← migracje SQL + meta/ (snapshoty — NIE edytować ręcznie)
+│   │   ├── start.sh               ← migrate → (seed gdy RUN_SEED=true) → serwer
 │   │   └── src/
-│   │       ├── index.ts           ← serwer Fastify
+│   │       ├── index.ts           ← entrypoint serwera
+│   │       ├── app.ts             ← buildApp(): rejestracja route'ów, error handler
 │   │       ├── db/
-│   │       │   ├── schema.ts      ← Drizzle schema (wszystkie tabele)
+│   │       │   ├── client.ts      ← współdzielona pula połączeń
+│   │       │   ├── schema.ts      ← Drizzle schema (wszystkie tabele + indeksy)
 │   │       │   ├── migrate.ts     ← runner migracji
-│   │       │   └── seed.ts        ← dane startowe (produkty, kot)
+│   │       │   └── seed.ts        ← dane startowe (kot + produkty, w tym BASE)
 │   │       ├── routes/
-│   │       │   ├── cats.ts
-│   │       │   ├── foods.ts
-│   │       │   ├── feed-entries.ts
-│   │       │   ├── day-summary.ts
-│   │       │   ├── close-day.ts
-│   │       │   ├── weight.ts
-│   │       │   ├── history.ts
-│   │       │   ├── day-notes.ts
-│   │       │   └── export.ts
-│   │       └── lib/
-│   │           └── calc.ts        ← logika obliczeń kcal
-│   └── web/               ← frontend React
-│       ├── package.json
-│       ├── tsconfig.json
-│       ├── Dockerfile
-│       ├── vite.config.ts
+│   │       │   ├── cats.ts / foods.ts / feed-entries.ts
+│   │       │   ├── day-summary.ts / close-day.ts / weight.ts
+│   │       │   ├── history.ts / day-notes.ts
+│   │       │   ├── export.ts      ← CSV
+│   │       │   └── backup.ts      ← eksport/import JSON (pełny backup)
+│   │       ├── lib/
+│   │       │   ├── calc.ts        ← logika obliczeń kcal
+│   │       │   ├── dates.ts       ← granice dnia w Europe/Warsaw
+│   │       │   └── feed-entry.ts  ← rozliczanie gramy/sztuki
+│   │       └── test/              ← testy integracyjne (wymagają DATABASE_URL)
+│   └── web/               ← frontend React (PWA przez vite-plugin-pwa)
+│       ├── package.json / tsconfig*.json / Dockerfile / .dockerignore
+│       ├── vite.config.ts         ← PWA manifest + define __APP_VERSION__
+│       ├── nginx.conf             ← prod: proxy /api, SPA fallback, cache, security headers
+│       ├── eslint.config.js
 │       ├── index.html
 │       └── src/
-│           ├── main.tsx
-│           ├── App.tsx
-│           ├── api/
-│           │   └── client.ts      ← fetch wrapper (`/api/...`)
+│           ├── main.tsx / App.tsx ← routing, QueryClient z globalnym onError
+│           ├── api/client.ts      ← fetch wrapper (`/api/...`)
+│           ├── changelog.ts       ← CHANGELOG wyświetlany w aplikacji
 │           ├── pages/
 │           │   ├── Today.tsx      ← główny ekran dnia
 │           │   ├── CloseDayPage.tsx ← domknięcie dnia kolacją
-│           │   ├── CatsAdmin.tsx
-│           │   ├── FoodsAdmin.tsx
-│           │   ├── WeightPage.tsx
-│           │   └── HistoryPage.tsx ← wykresy spożycia i wagi
+│           │   ├── CatsAdmin.tsx / FoodsAdmin.tsx
+│           │   ├── WeightPage.tsx / HistoryPage.tsx
+│           │   ├── DataPage.tsx   ← backup/restore JSON
+│           │   └── NotFound.tsx
 │           ├── components/
-│           │   ├── DaySummaryCard.tsx
-│           │   ├── WeeklySummaryCard.tsx ← podsumowanie 7 dni
-│           │   ├── DayNoteInput.tsx     ← notatka dnia (auto-save)
-│           │   ├── FeedEntryList.tsx
-│           │   ├── AddMealForm.tsx
-│           │   ├── CloseDayCalc.tsx
-│           │   ├── OfflineBanner.tsx
-│           │   └── Layout.tsx
-│           ├── constants/
-│           │   └── categories.ts  ← kolory i nazwy kategorii
-│           └── types/
-│               └── index.ts      ← wspólne typy TS
+│           │   ├── DaySummaryCard.tsx / WeeklySummaryCard.tsx
+│           │   ├── DayNoteInput.tsx / FeedEntryList.tsx / AddMealForm.tsx
+│           │   ├── CloseDayCalc.tsx / DecimalInput.tsx
+│           │   ├── ErrorBoundary.tsx / ErrorToasts.tsx / OfflineBanner.tsx
+│           │   └── Layout.tsx     ← nawigacja, wersja (z __APP_VERSION__)
+│           ├── lib/               ← dates, mealAmount, toast, useCurrentDate, useDebouncedValue
+│           ├── constants/categories.ts
+│           └── types/index.ts
 └── scripts/
-    └── backup.sh
+    ├── backup.sh          ← pg_dump przez docker exec
+    └── crontab.example
 ```
 
 ## Konwencje kodu
@@ -118,15 +120,18 @@ catcal/
 ## Jak uruchomić
 
 ```bash
-cd catcal
+cp .env.example .env   # ustaw hasła; przy pierwszym starcie na świeżej bazie: RUN_SEED=true
 docker compose up --build
 ```
 
-Aplikacja dostępna na `http://localhost:3000` (w produkcji za Traefik na `cat.sh.info.pl`).
+Aplikacja dostępna na `http://localhost:8100`, API na `http://localhost:8101/api`
+(w produkcji za Traefik na `cat.sh.info.pl`).
 
 ## Kolejność implementacji
 
-Zawsze sprawdź `docs/PLAN.md` przed rozpoczęciem pracy. Realizuj etapy po kolei.
+`docs/PLAN.md` to dokument **historyczny** — plan został w całości zrealizowany.
+Nie traktuj jego checkboxów jako zadań. Stan projektu opisują `README.md`,
+`docs/ARCHITECTURE.md` i changelog w `packages/web/src/changelog.ts`.
 
 ## Ważne zasady
 
@@ -137,7 +142,7 @@ Zawsze sprawdź `docs/PLAN.md` przed rozpoczęciem pracy. Realizuj etapy po kole
 5. **Karma standardowa** w MVP: 1 kcal = 1 g (100 kcal/100g), stała systemowa
 6. **Migracje** — każda zmiana schematu przez plik migracji Drizzle, nigdy ręcznie
 7. **Git** — po każdej zmianie w kodzie wykonaj commit i push.
-8. **Wersjonowanie** — każdy user-facing feature lub fix podbija wersję (`APP_VERSION` w `Layout.tsx`) i dodaje wpis do `CHANGELOG` w `changelog.ts`. Procedura i schemat: `docs/VERSIONING.md`.
+8. **Wersjonowanie** — każdy user-facing feature lub fix podbija wersję (`version` w `packages/web/package.json` — Layout czyta ją przez `__APP_VERSION__` z vite define) i dodaje wpis do `CHANGELOG` w `changelog.ts`. Procedura i schemat: `docs/VERSIONING.md`.
 
 ## Git workflow
 
