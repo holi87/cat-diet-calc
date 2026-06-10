@@ -8,6 +8,7 @@ import {
   date,
   timestamp,
   unique,
+  index,
 } from 'drizzle-orm/pg-core';
 
 export const cats = pgTable('cats', {
@@ -31,32 +32,45 @@ export const foods = pgTable('foods', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const feedEntries = pgTable('feed_entries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  catId: uuid('cat_id')
-    .notNull()
-    .references(() => cats.id),
-  datetime: timestamp('datetime', { withTimezone: true }).notNull(),
-  foodId: uuid('food_id')
-    .notNull()
-    .references(() => foods.id),
-  grams: numeric('grams', { precision: 8, scale: 2 }).notNull(),
-  pieces: numeric('pieces', { precision: 8, scale: 2 }),
-  kcalCalculated: numeric('kcal_calculated', { precision: 8, scale: 2 }).notNull(),
-  note: text('note'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const feedEntries = pgTable(
+  'feed_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    catId: uuid('cat_id')
+      .notNull()
+      .references(() => cats.id),
+    datetime: timestamp('datetime', { withTimezone: true }).notNull(),
+    foodId: uuid('food_id')
+      .notNull()
+      .references(() => foods.id),
+    grams: numeric('grams', { precision: 8, scale: 2 }).notNull(),
+    pieces: numeric('pieces', { precision: 8, scale: 2 }),
+    kcalCalculated: numeric('kcal_calculated', { precision: 8, scale: 2 }).notNull(),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    // Day summary, history and close-day all filter by cat + datetime range
+    catDatetimeIdx: index('feed_entries_cat_datetime_idx').on(table.catId, table.datetime),
+  }),
+);
 
-export const weightEntries = pgTable('weight_entries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  catId: uuid('cat_id')
-    .notNull()
-    .references(() => cats.id),
-  date: date('date').notNull(),
-  weightKg: numeric('weight_kg', { precision: 5, scale: 3 }).notNull(),
-  note: text('note'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const weightEntries = pgTable(
+  'weight_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    catId: uuid('cat_id')
+      .notNull()
+      .references(() => cats.id),
+    date: date('date').notNull(),
+    weightKg: numeric('weight_kg', { precision: 5, scale: 3 }).notNull(),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    catDateIdx: index('weight_entries_cat_date_idx').on(table.catId, table.date),
+  }),
+);
 
 export const dayNotes = pgTable(
   'day_notes',
