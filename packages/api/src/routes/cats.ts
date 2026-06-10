@@ -13,11 +13,25 @@ export async function catsRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // GET /api/cats — list active cats
-  fastify.get('/cats', async (_req, reply) => {
-    const result = await db.select().from(cats).where(eq(cats.active, true));
-    return reply.send(result);
-  });
+  // GET /api/cats — list active cats; ?includeInactive=true lists all so the
+  // admin view can re-activate a hidden cat
+  fastify.get<{ Querystring: { includeInactive?: boolean } }>(
+    '/cats',
+    {
+      schema: {
+        querystring: {
+          type: 'object',
+          properties: { includeInactive: { type: 'boolean' } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const result = req.query.includeInactive
+        ? await db.select().from(cats)
+        : await db.select().from(cats).where(eq(cats.active, true));
+      return reply.send(result);
+    },
+  );
 
   // POST /api/cats — create cat
   fastify.post<{

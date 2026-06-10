@@ -47,11 +47,12 @@ export function CatsAdmin() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: cats = [], isLoading } = useQuery<Cat[]>({
-    queryKey: ['cats'],
-    queryFn: () => apiGet<Cat[]>('/cats'),
+    queryKey: ['cats', { includeInactive: showInactive }],
+    queryFn: () => apiGet<Cat[]>('/cats', showInactive ? { includeInactive: 'true' } : {}),
   });
 
   const { mutate: createCat, isPending: creating } = useMutation({
@@ -84,6 +85,20 @@ export function CatsAdmin() {
     mutationFn: (cat: Cat) => apiPut(`/cats/${cat.id}`, { active: !cat.active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cats'] }),
   });
+
+  // Deactivation hides the cat from the whole app — one accidental tap on the
+  // badge must not do that silently
+  function handleToggleActive(cat: Cat) {
+    if (
+      cat.active &&
+      !window.confirm(
+        `Ukryć kota "${cat.name}"? Zniknie z aplikacji, ale dane pozostaną — przywrócisz go przełącznikiem „Pokaż nieaktywne".`,
+      )
+    ) {
+      return;
+    }
+    toggleActive(cat);
+  }
 
   const { mutate: deleteCat, isPending: deleting } = useMutation({
     mutationFn: (id: string) => apiDelete(`/cats/${id}`),
@@ -160,6 +175,15 @@ export function CatsAdmin() {
           className="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
         >
           + Dodaj kota
+        </button>
+      </div>
+
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={() => setShowInactive(!showInactive)}
+          className={`text-xs px-3 py-1 rounded-full font-medium border ${showInactive ? 'bg-gray-500 text-white border-gray-500' : 'bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700'}`}
+        >
+          {showInactive ? 'Ukryj nieaktywne' : 'Pokaż nieaktywne'}
         </button>
       </div>
 
@@ -252,7 +276,7 @@ export function CatsAdmin() {
       ) : (
         <div className="space-y-2">
           {cats.map((cat) => (
-            <div key={cat.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 px-4 py-3">
+            <div key={cat.id} className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-gray-900/30 px-4 py-3 ${cat.active ? '' : 'opacity-60'}`}>
               {confirmDeleteId === cat.id ? (
                 /* Second confirmation step */
                 <div className="flex items-center gap-2">
@@ -294,7 +318,8 @@ export function CatsAdmin() {
                     </div>
                   </div>
                   <button
-                    onClick={() => toggleActive(cat)}
+                    onClick={() => handleToggleActive(cat)}
+                    title={cat.active ? 'Ukryj kota' : 'Przywróć kota'}
                     className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
                       cat.active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                     }`}

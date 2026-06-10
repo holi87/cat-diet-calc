@@ -116,6 +116,15 @@ describe('API integration', integrationOptions, () => {
 
     const afterDelete = await requestJson<CatResponse[]>({ method: 'GET', url: '/api/cats' });
     assert.deepEqual(afterDelete.body, []);
+
+    // The admin view can still reach the deactivated cat to re-activate it
+    const withInactive = await requestJson<CatResponse[]>({
+      method: 'GET',
+      url: '/api/cats?includeInactive=true',
+    });
+    assert.equal(withInactive.body.length, 1);
+    assert.equal(withInactive.body[0].id, cat.id);
+    assert.equal(withInactive.body[0].active, false);
   });
 
   it('validates cat payloads', async () => {
