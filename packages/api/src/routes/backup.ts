@@ -63,6 +63,88 @@ export async function backupRoutes(fastify: FastifyInstance) {
       .send(JSON.stringify(envelope, null, 2));
   });
 
+  // Rows arrive exactly as exported by drizzle: numeric → string, timestamptz →
+  // ISO string, date → YYYY-MM-DD string. additionalProperties: false keeps the
+  // restore from writing arbitrary columns (mass assignment).
+  const uuidField = { type: 'string', format: 'uuid' };
+  const numericString = { type: 'string', pattern: '^-?\\d+(\\.\\d+)?$' };
+  const nullableNumericString = { type: ['string', 'null'], pattern: '^-?\\d+(\\.\\d+)?$' };
+  const isoTimestamp = { type: 'string', minLength: 1 };
+  const dateString = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' };
+
+  const rowSchemas = {
+    cats: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'name', 'dailyKcalTarget', 'active'],
+      properties: {
+        id: uuidField,
+        name: { type: 'string', minLength: 1 },
+        dailyKcalTarget: { type: 'integer', minimum: 1 },
+        targetWeightKg: nullableNumericString,
+        photo: { type: ['string', 'null'] },
+        active: { type: 'boolean' },
+        createdAt: isoTimestamp,
+      },
+    },
+    foods: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'name', 'category', 'kcalPer100g'],
+      properties: {
+        id: uuidField,
+        name: { type: 'string', minLength: 1 },
+        category: { type: 'string', enum: ['BASE', 'KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
+        kcalPer100g: numericString,
+        unit: { type: 'string', enum: ['GRAM', 'PIECE'] },
+        kcalPerPiece: nullableNumericString,
+        archived: { type: 'boolean' },
+        createdAt: isoTimestamp,
+      },
+    },
+    feedEntries: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'catId', 'foodId', 'datetime', 'grams', 'kcalCalculated'],
+      properties: {
+        id: uuidField,
+        catId: uuidField,
+        foodId: uuidField,
+        datetime: isoTimestamp,
+        grams: numericString,
+        pieces: nullableNumericString,
+        kcalCalculated: numericString,
+        note: { type: ['string', 'null'] },
+        createdAt: isoTimestamp,
+      },
+    },
+    weightEntries: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'catId', 'date', 'weightKg'],
+      properties: {
+        id: uuidField,
+        catId: uuidField,
+        date: dateString,
+        weightKg: numericString,
+        note: { type: ['string', 'null'] },
+        createdAt: isoTimestamp,
+      },
+    },
+    dayNotes: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'catId', 'date', 'content'],
+      properties: {
+        id: uuidField,
+        catId: uuidField,
+        date: dateString,
+        content: { type: 'string' },
+        updatedAt: isoTimestamp,
+      },
+    },
+  };
+
   const importBodySchema = {
     type: 'object',
     required: ['format', 'version', 'data'],
@@ -74,11 +156,11 @@ export async function backupRoutes(fastify: FastifyInstance) {
         type: 'object',
         required: ['cats', 'foods', 'feedEntries', 'weightEntries', 'dayNotes'],
         properties: {
-          cats: { type: 'array', items: { type: 'object' } },
-          foods: { type: 'array', items: { type: 'object' } },
-          feedEntries: { type: 'array', items: { type: 'object' } },
-          weightEntries: { type: 'array', items: { type: 'object' } },
-          dayNotes: { type: 'array', items: { type: 'object' } },
+          cats: { type: 'array', items: rowSchemas.cats },
+          foods: { type: 'array', items: rowSchemas.foods },
+          feedEntries: { type: 'array', items: rowSchemas.feedEntries },
+          weightEntries: { type: 'array', items: rowSchemas.weightEntries },
+          dayNotes: { type: 'array', items: rowSchemas.dayNotes },
         },
       },
     },
