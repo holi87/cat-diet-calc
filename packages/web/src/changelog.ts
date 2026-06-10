@@ -94,4 +94,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Karta „Ostatnie 7 dni", Historia i limit kcal odświeżają się od razu po zmianach',
     ],
   },
+  {
+    version: '1.6.2',
+    changes: [
+      'Dzień można domknąć tylko raz — podwójne kliknięcie lub odświeżenie nie duplikuje kolacji',
+      'Domknięcie dnia zgłasza błąd, gdy brak produktu karmy, zamiast cicho pomijać wpis (awaryjnie używa karmy suchej, gdy brak karmy bazowej)',
+      'Ręczna kolacja zapisywana w jednej transakcji — koniec połowicznych zapisów przy błędzie sieci',
+      'Kalkulator kolacji bez wyścigów — wyświetlana gramatura zawsze odpowiada wpisanym wartościom',
+    ],
+  },
 ];
