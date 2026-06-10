@@ -26,6 +26,11 @@ export async function historyRoutes(fastify: FastifyInstance) {
     async (req, reply) => {
       const { catId, from, to } = req.query;
 
+      // The gap-filling loop below iterates day by day — cap the range
+      if (from > to || addDays(from, 366) < to) {
+        return reply.code(400).send({ error: 'Date range must be at most 366 days' });
+      }
+
       const [cat] = await db.select().from(cats).where(eq(cats.id, catId));
       if (!cat) return reply.code(404).send({ error: 'Cat not found' });
 

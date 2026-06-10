@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { eq } from 'drizzle-orm';
-import { feedEntries, foods } from '../db/schema';
+import { feedEntries, foods, cats } from '../db/schema';
 import { createDbClient } from '../db/client';
 import { resolveFeedEntryAmount, type ResolvedFeedEntryAmount } from '../lib/feed-entry';
 
@@ -27,10 +27,11 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
           properties: {
             catId: { type: 'string', format: 'uuid' },
             foodId: { type: 'string', format: 'uuid' },
-            grams: { type: 'number', minimum: 0.1 },
-            pieces: { type: 'number', minimum: 0.01 },
+            // Upper bounds keep unit mix-ups (mg vs g) from overflowing numeric(8,2)
+            grams: { type: 'number', minimum: 0.1, maximum: 5000 },
+            pieces: { type: 'number', minimum: 0.01, maximum: 100 },
             datetime: { type: 'string' },
-            note: { type: 'string' },
+            note: { type: 'string', maxLength: 500 },
           },
         },
       },
@@ -38,8 +39,21 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
     async (req, reply) => {
       const { catId, foodId, grams, pieces, datetime, note } = req.body;
 
+      // Invalid datetime or missing cat used to surface as a raw driver 500
+      const parsedDatetime = datetime ? new Date(datetime) : new Date();
+      if (isNaN(parsedDatetime.getTime())) {
+        return reply.code(400).send({ error: 'Invalid datetime' });
+      }
+
+      const [cat] = await db.select().from(cats).where(eq(cats.id, catId));
+      if (!cat) return reply.code(404).send({ error: 'Cat not found' });
+
       const [food] = await db.select().from(foods).where(eq(foods.id, foodId));
       if (!food) return reply.code(404).send({ error: 'Food not found' });
+      if (food.archived) {
+        // Soft delete is meant to block new usage of the product
+        return reply.code(409).send({ error: 'Food is archived' });
+      }
 
       let resolvedAmount: ResolvedFeedEntryAmount;
       try {
@@ -56,7 +70,7 @@ export async function feedEntriesRoutes(fastify: FastifyInstance) {
           grams: String(resolvedAmount.grams),
           pieces: resolvedAmount.pieces == null ? null : String(resolvedAmount.pieces),
           kcalCalculated: String(resolvedAmount.kcalCalculated),
-          datetime: datetime ? new Date(datetime) : new Date(),
+          datetime: parsedDatetime,
           note: note ?? null,
         })
         .returning();

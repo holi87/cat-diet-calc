@@ -47,9 +47,9 @@ export async function catsRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['name', 'dailyKcalTarget'],
           properties: {
-            name: { type: 'string', minLength: 1 },
-            dailyKcalTarget: { type: 'integer', minimum: 1 },
-            targetWeightKg: { type: ['number', 'null'] },
+            name: { type: 'string', minLength: 1, maxLength: 100 },
+            dailyKcalTarget: { type: 'integer', minimum: 1, maximum: 2000 },
+            targetWeightKg: { type: ['number', 'null'], minimum: 0.1, maximum: 30 },
             photo: { type: ['string', 'null'] },
           },
         },
@@ -114,10 +114,10 @@ export async function catsRoutes(fastify: FastifyInstance) {
         body: {
           type: 'object',
           properties: {
-            name: { type: 'string', minLength: 1 },
-            dailyKcalTarget: { type: 'integer', minimum: 1 },
+            name: { type: 'string', minLength: 1, maxLength: 100 },
+            dailyKcalTarget: { type: 'integer', minimum: 1, maximum: 2000 },
             active: { type: 'boolean' },
-            targetWeightKg: { type: ['number', 'null'] },
+            targetWeightKg: { type: ['number', 'null'], minimum: 0.1, maximum: 30 },
             photo: { type: ['string', 'null'] },
           },
         },

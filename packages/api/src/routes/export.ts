@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { eq, and, gte, lt } from 'drizzle-orm';
 import { feedEntries, foods, cats } from '../db/schema';
 import { createDbClient } from '../db/client';
-import { localDateStr, localTimeStr, zonedDayRange } from '../lib/dates';
+import { addDays, localDateStr, localTimeStr, zonedDayRange } from '../lib/dates';
 
 export async function exportRoutes(fastify: FastifyInstance) {
   const db = createDbClient(fastify);
@@ -25,6 +25,10 @@ export async function exportRoutes(fastify: FastifyInstance) {
     },
     async (req, reply) => {
       const { catId, from, to } = req.query;
+
+      if (from > to || addDays(from, 366) < to) {
+        return reply.code(400).send({ error: 'Date range must be at most 366 days' });
+      }
 
       const [cat] = await db.select().from(cats).where(eq(cats.id, catId));
       if (!cat) return reply.code(404).send({ error: 'Cat not found' });

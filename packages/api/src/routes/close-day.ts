@@ -17,10 +17,10 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       catId: { type: 'string', format: 'uuid' },
       date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
       meatFoodId: { type: 'string', format: 'uuid' },
-      meatGrams: { type: 'number', minimum: 0 },
+      meatGrams: { type: 'number', minimum: 0, maximum: 5000 },
       kibbleFoodId: { type: 'string', format: 'uuid' },
       // Manual dinner mode: caller picks the kibble grams instead of the calculator
-      kibbleGrams: { type: 'number', minimum: 0 },
+      kibbleGrams: { type: 'number', minimum: 0, maximum: 5000 },
     },
   };
 
@@ -61,6 +61,12 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
     if (meatFoodId && meatGrams > 0) {
       [meatFood] = await db.select().from(foods).where(eq(foods.id, meatFoodId));
       if (!meatFood) throw { statusCode: 404, message: 'Meat food not found' };
+      // The dinner flow is gram-based; piece-unit and archived products would
+      // bypass the unit rules enforced everywhere else
+      if (meatFood.unit === 'PIECE') {
+        throw { statusCode: 400, message: 'Piece-unit foods cannot be used as the dinner add-on' };
+      }
+      if (meatFood.archived) throw { statusCode: 400, message: 'Meat food is archived' };
       meatKcalPer100g = parseFloat(meatFood.kcalPer100g);
     }
 
@@ -72,6 +78,10 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
     if (kibbleFoodId) {
       [kibbleFood] = await db.select().from(foods).where(eq(foods.id, kibbleFoodId));
       if (!kibbleFood) throw { statusCode: 404, message: 'Kibble food not found' };
+      if (kibbleFood.unit === 'PIECE') {
+        throw { statusCode: 400, message: 'Piece-unit foods cannot be used as kibble' };
+      }
+      if (kibbleFood.archived) throw { statusCode: 400, message: 'Kibble food is archived' };
       kibbleKcalPer100g = parseFloat(kibbleFood.kcalPer100g);
       resolvedKibbleFoodId = kibbleFoodId;
     } else {
@@ -93,6 +103,12 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
         kibbleKcalPer100g = parseFloat(kibbleFood.kcalPer100g);
         resolvedKibbleFoodId = kibbleFood.id;
       }
+    }
+
+    // calculateCloseDay divides by this — a 0 kcal/100g product would yield
+    // Infinity grams and a driver error on insert
+    if (kibbleKcalPer100g <= 0) {
+      throw { statusCode: 400, message: 'Kibble product has 0 kcal/100g — fix it in Admin → Produkty' };
     }
 
     const result = calculateCloseDay({

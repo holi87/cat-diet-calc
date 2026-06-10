@@ -246,6 +246,56 @@ describe('API integration', integrationOptions, () => {
     assert.deepEqual(deleted.body, { success: true });
   });
 
+  it('rejects invalid feed-entry payloads with 4xx instead of raw driver errors', async () => {
+    const cat = await createCat();
+    const kibble = await createFood({ name: 'Karma', category: 'KIBBLE', kcalPer100g: 100 });
+
+    const badDatetime = await app.inject({
+      method: 'POST',
+      url: '/api/feed-entries',
+      payload: { catId: cat.id, foodId: kibble.id, grams: 10, datetime: 'not-a-date' },
+    });
+    assert.equal(badDatetime.statusCode, 400);
+
+    const hugeGrams = await app.inject({
+      method: 'POST',
+      url: '/api/feed-entries',
+      payload: { catId: cat.id, foodId: kibble.id, grams: 999999 },
+    });
+    assert.equal(hugeGrams.statusCode, 400);
+
+    const missingCat = await app.inject({
+      method: 'POST',
+      url: '/api/feed-entries',
+      payload: { catId: '00000000-0000-4000-8000-000000000000', foodId: kibble.id, grams: 10 },
+    });
+    assert.equal(missingCat.statusCode, 404);
+
+    await requestJson({ method: 'POST', url: `/api/foods/${kibble.id}/archive` });
+    const archivedFood = await app.inject({
+      method: 'POST',
+      url: '/api/feed-entries',
+      payload: { catId: cat.id, foodId: kibble.id, grams: 10 },
+    });
+    assert.equal(archivedFood.statusCode, 409);
+  });
+
+  it('caps history and CSV export date ranges at 366 days', async () => {
+    const cat = await createCat();
+
+    const history = await app.inject({
+      method: 'GET',
+      url: `/api/history/daily?catId=${cat.id}&from=2020-01-01&to=2026-06-01`,
+    });
+    assert.equal(history.statusCode, 400);
+
+    const csv = await app.inject({
+      method: 'GET',
+      url: `/api/export/csv?catId=${cat.id}&from=2020-01-01&to=2026-06-01`,
+    });
+    assert.equal(csv.statusCode, 400);
+  });
+
   it('summarizes one day only, including piece entries', async () => {
     const cat = await createCat({ dailyKcalTarget: 50 });
     const kibble = await createFood({ name: 'Karma', category: 'KIBBLE', kcalPer100g: 100 });

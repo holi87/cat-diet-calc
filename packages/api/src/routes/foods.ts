@@ -12,11 +12,12 @@ type FoodBody = {
 };
 
 const bodyProperties = {
-  name: { type: 'string', minLength: 1 },
+  name: { type: 'string', minLength: 1, maxLength: 200 },
   category: { type: 'string', enum: ['BASE', 'KIBBLE', 'WET_FOOD', 'MEAT', 'TREAT'] },
-  kcalPer100g: { type: 'number', minimum: 0 },
+  // 0 stays allowed: PIECE-unit foods carry kcal in kcalPerPiece instead
+  kcalPer100g: { type: 'number', minimum: 0, maximum: 1000 },
   unit: { type: 'string', enum: ['GRAM', 'PIECE'] },
-  kcalPerPiece: { type: ['number', 'null'], minimum: 0 },
+  kcalPerPiece: { type: ['number', 'null'], minimum: 0, maximum: 500 },
 };
 
 export async function foodsRoutes(fastify: FastifyInstance) {
