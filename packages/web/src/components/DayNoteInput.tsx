@@ -18,7 +18,26 @@ export function DayNoteInput({ catId, date }: DayNoteInputProps) {
   const [text, setText] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initialLoadDone = useRef(false);
+  // Mirrors `text` so effects can read the current value without re-running on
+  // every keystroke; null lastSynced = note for this cat/day not loaded yet
+  const textRef = useRef('');
+  const lastSynced = useRef<string | null>(null);
+
+  const setTextBoth = (value: string) => {
+    textRef.current = value;
+    setText(value);
+  };
+
+  // Reset for the new cat/day; the cleanup also kills a pending debounce so a
+  // half-typed note cannot be saved under the new key
+  useEffect(() => {
+    lastSynced.current = null;
+    setTextBoth('');
+    setSaveStatus('idle');
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [catId, date]);
 
   const { data: note } = useQuery<DayNoteResponse>({
     queryKey: ['day-note', catId, date],
@@ -26,20 +45,27 @@ export function DayNoteInput({ catId, date }: DayNoteInputProps) {
     enabled: !!catId && !!date,
   });
 
-  // Sync from server on load or when catId/date changes
+  // Sync from the server, but never overwrite unsaved edits — a background
+  // refetch must not revert characters typed while it was in flight
   useEffect(() => {
-    if (note !== undefined) {
-      setText(note.content);
-      initialLoadDone.current = true;
+    if (note === undefined) return;
+    const hasUnsavedEdits =
+      lastSynced.current !== null && textRef.current !== lastSynced.current;
+    if (!hasUnsavedEdits) {
+      setTextBoth(note.content);
       setSaveStatus('idle');
     }
+    lastSynced.current = note.content;
   }, [note]);
 
   const { mutate: saveNote } = useMutation({
     mutationFn: (content: string) => apiPut('/day-notes', { catId, date, content }),
-    onSuccess: () => {
+    onSuccess: (_data, content) => {
       setSaveStatus('saved');
-      qc.invalidateQueries({ queryKey: ['day-note', catId, date] });
+      lastSynced.current = content;
+      // Update the cache directly — an invalidate-triggered refetch used to
+      // overwrite the textarea mid-typing
+      qc.setQueryData<DayNoteResponse>(['day-note', catId, date], { catId, date, content });
       setTimeout(() => setSaveStatus('idle'), 2000);
     },
     onError: () => {
@@ -60,18 +86,11 @@ export function DayNoteInput({ catId, date }: DayNoteInputProps) {
   );
 
   function handleChange(value: string) {
-    setText(value);
-    if (initialLoadDone.current) {
+    setTextBoth(value);
+    if (lastSynced.current !== null) {
       debouncedSave(value);
     }
   }
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
 
   return (
     <div className="mb-4">
