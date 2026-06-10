@@ -41,7 +41,8 @@ export async function weightRoutes(fastify: FastifyInstance) {
           properties: {
             catId: { type: 'string', format: 'uuid' },
             date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-            weightKg: { type: 'number', minimum: 0.1 },
+            // Column is numeric(5,3) — beyond 30 kg it is a unit mix-up, not a cat
+            weightKg: { type: 'number', minimum: 0.1, maximum: 30 },
             note: { type: 'string' },
           },
         },

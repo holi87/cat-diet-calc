@@ -6,7 +6,7 @@
 
 | Kontener       | Obraz / Build        | Port wewnętrzny | Opis                        |
 |----------------|----------------------|------------------|-----------------------------|
-| `catcal-web`   | build: `packages/web`| 3000             | Frontend React (Vite dev / nginx prod) |
+| `catcal-web`   | build: `packages/web`| 80 (host: 8100)  | Frontend React (Vite dev / nginx prod) |
 | `catcal-api`   | build: `packages/api`| 4000             | Backend Fastify             |
 | `catcal-db`    | postgres:16-alpine   | 5432 (tylko wewnętrznie) | PostgreSQL           |
 
@@ -201,7 +201,7 @@ Wszystkie pod prefiksem `/api`. Odpowiedzi JSON.
 
 ```
 Internet → Cloudflare Tunnel → RPi5 → Traefik → Docker
-                                                 ├── /      → catcal-web:3000
+                                                 ├── /      → catcal-web:80
                                                  └── /api   → catcal-api:4000
 ```
 

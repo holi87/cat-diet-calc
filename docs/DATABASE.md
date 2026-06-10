@@ -57,10 +57,12 @@ start.sh → node dist/db/migrate.js → node dist/db/seed.js → node dist/inde
 ./scripts/backup.sh
 ```
 
-- Robi `pg_dump` z kontenera `catcal-db`
+- Robi `pg_dump` z kontenera `catcal-db` (credentiale z `.env` — fail-fast gdy brak)
 - Kompresuje gzip → `/var/backups/catcal/catcal_YYYYMMDD_HHMMSS.sql.gz`
 - Trzyma ostatnie 30 backupów
-- Konfigurowalny przez cron: `0 3 * * *`
+- **Automatyzacja:** zainstaluj crona wg `scripts/crontab.example` (`crontab -e`,
+  wpis `0 3 * * *` z logiem do `/var/log/catcal-backup.log`) — bez tego backupy
+  powstają tylko przy ręcznym uruchomieniu przed deployem
 
 ## Dostęp do bazy (debug)
 
@@ -68,8 +70,8 @@ start.sh → node dist/db/migrate.js → node dist/db/seed.js → node dist/inde
 # Przez docker exec
 docker exec -it catcal-db psql -U catcal -d catcal
 
-# Przez port lokalny (dev, port 5433)
-psql postgresql://catcal:catcal_secret_2024@localhost:5433/catcal
+# Przez port lokalny (dev, port 5433) — hasło z .env, nie commituj go do repo
+psql postgresql://catcal:TWOJE_HASLO@localhost:5433/catcal
 ```
 
 ## Konwencje schematu

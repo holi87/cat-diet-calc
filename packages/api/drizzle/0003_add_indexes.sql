@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS "feed_entries_cat_datetime_idx" ON "feed_entries" ("cat_id","datetime");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "weight_entries_cat_date_idx" ON "weight_entries" ("cat_id","date");

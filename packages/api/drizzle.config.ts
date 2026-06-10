@@ -5,6 +5,7 @@ export default {
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? 'postgresql://catcal:catcal_secret_2024@localhost:5433/catcal',
+    // No credentials in the repo — pass DATABASE_URL when a command needs the DB
+    url: process.env.DATABASE_URL ?? 'postgresql://localhost:5433/catcal',
   },
 } satisfies Config;

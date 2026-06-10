@@ -42,8 +42,10 @@ export function buildApp() {
   fastify.setErrorHandler((error, _req, reply) => {
     fastify.log.error(error);
     const statusCode = error.statusCode ?? 500;
+    // Raw driver errors leak table and constraint names — keep 5xx generic,
+    // the full error is in the log
     return reply.code(statusCode).send({
-      error: error.message ?? 'Internal Server Error',
+      error: statusCode >= 500 ? 'Internal Server Error' : (error.message ?? 'Bad Request'),
     });
   });
 

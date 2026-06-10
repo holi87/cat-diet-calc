@@ -1,0 +1,6 @@
+# CatCal — automatyczny backup bazy o 03:00 każdej nocy.
+# Instalacja na serwerze (jako user z dostępem do dockera):
+#   crontab -e
+# i wklej poniższą linię (popraw ścieżkę do repo):
+#
+0 3 * * * /home/USER/cat-diet-calc/scripts/backup.sh >> /var/log/catcal-backup.log 2>&1

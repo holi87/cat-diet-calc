@@ -113,7 +113,7 @@ services:
       - "traefik.http.routers.catcal-web.rule=Host(`cat.sh.info.pl`)"
       - "traefik.http.routers.catcal-web.priority=1"
       - "traefik.http.routers.catcal-web.entrypoints=web"
-      - "traefik.http.services.catcal-web.loadbalancer.server.port=3000"
+      - "traefik.http.services.catcal-web.loadbalancer.server.port=80"
 
   catcal-api:
     build: ./packages/api
@@ -184,7 +184,7 @@ http:
     catcal-web-svc:
       loadBalancer:
         servers:
-          - url: "http://192.168.1.100:3000"    # ← IP Twojego servera w sieci LAN
+          - url: "http://192.168.1.100:8100"    # ← IP Twojego servera w sieci LAN (host-port web)
 
     catcal-api-svc:
       loadBalancer:
@@ -414,14 +414,14 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 # Custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 3000
+EXPOSE 80
 ```
 
 **packages/web/nginx.conf:**
 
 ```nginx
 server {
-    listen 3000;
+    listen 80;
     root /usr/share/nginx/html;
     index index.html;
 

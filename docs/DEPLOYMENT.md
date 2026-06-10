@@ -38,7 +38,7 @@ docker compose up --build -d
    cd packages/web && npx tsc --noEmit
    ```
 2. **Sprawdź build frontendu:** `cd packages/web && npx vite build`
-3. **Zrób backup bazy:** `./scripts/backup.sh`
+3. **Zrób backup bazy:** `./scripts/backup.sh` (cykliczny backup: cron wg `scripts/crontab.example`)
 
 ## Porty
 

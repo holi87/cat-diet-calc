@@ -112,4 +112,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Nieznany adres pokazuje stronę „Nie znaleziono" zamiast pustego ekranu',
     ],
   },
+  {
+    version: '1.6.4',
+    changes: [
+      'Walidacja wpisów — limity gramatury, sztuk i wagi z czytelnym komunikatem zamiast błędu serwera',
+      'Szybsza Historia i podsumowania — indeksy bazy na wpisach posiłków i wagi',
+      'Import kopii zapasowej dokładnie sprawdza zawartość pliku przed zapisem',
+      'Porządki techniczne: wersja aplikacji z jednego źródła, bezpieczniejsze obrazy Docker, automatyczne aktualizacje zależności',
+    ],
+  },
 ];

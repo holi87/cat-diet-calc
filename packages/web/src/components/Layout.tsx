@@ -3,7 +3,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { CHANGELOG } from '../changelog';
 import { OfflineBanner } from './OfflineBanner';
 
-const APP_VERSION = '1.6.3';
+// Version comes from package.json via vite define — bump it there
+const APP_VERSION = __APP_VERSION__;
 
 function useIosInstallBanner() {
   const [show, setShow] = useState(false);

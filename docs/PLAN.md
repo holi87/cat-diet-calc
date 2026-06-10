@@ -1,5 +1,10 @@
 # CatCal — Plan wdrożenia
 
+> **Dokument historyczny.** Plan został zrealizowany w całości (aplikacja jest na
+> wersji 1.6.x z kompletem funkcji + backup/restore JSON). Checkboxy celowo
+> pozostają nieodhaczone — nie traktuj ich jako listy zadań do zrobienia.
+> Aktualny stan opisuje `AGENTS.md` i `docs/ARCHITECTURE.md`.
+
 ## Etap 0: Przygotowanie projektu
 
 ### Krok 0.1 — Inicjalizacja repo i struktury
@@ -17,7 +22,7 @@
 - [ ] Sprawdź, czy `docker compose up` startuje bazę i migruje
 
 ### Krok 0.3 — Serwer Fastify (szkielet)
-- [ ] Podstawowy `src/index.ts`: Fastify z CORS off, prefix `/api` nie potrzebny (Traefik routuje)
+- [ ] Podstawowy `src/index.ts`: Fastify z CORS off; wszystkie route'y rejestrowane z prefiksem `/api` (tak działa `app.ts`)
 - [ ] Healthcheck: `GET /api/health` → `{ status: "ok" }`
 - [ ] Połączenie z bazą (Drizzle + pg)
 - [ ] Sprawdź, czy `docker compose up` startuje API i odpowiada na health

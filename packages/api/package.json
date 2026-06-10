@@ -1,6 +1,6 @@
 {
   "name": "@catcal/api",
-  "version": "1.1.0",
+  "version": "1.6.4",
   "description": "CatCal backend API (Fastify + Drizzle + PostgreSQL)",
   "main": "dist/index.js",
   "scripts": {
@@ -28,5 +28,8 @@
     "drizzle-kit": "^0.21.4",
     "tsx": "^4.11.0",
     "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

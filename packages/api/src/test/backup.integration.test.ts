@@ -133,6 +133,59 @@ describe('Backup import/export integration', integrationOptions, () => {
     assert.equal(res.statusCode, 400);
   });
 
+  it('strips unknown columns from imported rows (mass-assignment guard)', async () => {
+    // Fastify's AJV runs with removeAdditional: true, so additionalProperties:
+    // false strips unexpected keys before the handler — the bogus column never
+    // reaches the insert (it would otherwise crash the transaction with a 400).
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/import/json',
+      payload: {
+        format: 'catcal-backup',
+        version: 1,
+        data: {
+          cats: [
+            {
+              id: '00000000-0000-4000-8000-000000000001',
+              name: 'Mysza',
+              dailyKcalTarget: 200,
+              active: true,
+              evilColumn: 'nope',
+            },
+          ],
+          foods: [],
+          feedEntries: [],
+          weightEntries: [],
+          dayNotes: [],
+        },
+      },
+    });
+    assert.equal(res.statusCode, 200);
+
+    const cats = await getJson('/api/cats');
+    assert.equal(cats.length, 1);
+    assert.equal(cats[0].name, 'Mysza');
+    assert.equal('evilColumn' in cats[0], false);
+
+    // Wrong value type for a known column is still rejected outright
+    const badType = await app.inject({
+      method: 'POST',
+      url: '/api/import/json',
+      payload: {
+        format: 'catcal-backup',
+        version: 1,
+        data: {
+          cats: [{ id: 'not-a-uuid', name: 'X', dailyKcalTarget: 'a lot', active: true }],
+          foods: [],
+          feedEntries: [],
+          weightEntries: [],
+          dayNotes: [],
+        },
+      },
+    });
+    assert.equal(badType.statusCode, 400);
+  });
+
   it('rejects a backup missing required data arrays', async () => {
     const res = await app.inject({
       method: 'POST',
