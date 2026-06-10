@@ -103,4 +103,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Kalkulator kolacji bez wyścigów — wyświetlana gramatura zawsze odpowiada wpisanym wartościom',
     ],
   },
+  {
+    version: '1.6.3',
+    changes: [
+      'Ukrycie kota wymaga potwierdzenia, a przełącznik „Pokaż nieaktywne" pozwala go przywrócić',
+      'Przywracanie kopii zapasowej większej niż 1 MB działa na produkcji (limit nginx)',
+      'Notatka dnia nie cofa już pisanych znaków podczas zapisu i nie zapisuje się pod złą datą po zmianie dnia',
+      'Nieznany adres pokazuje stronę „Nie znaleziono" zamiast pustego ekranu',
+    ],
+  },
 ];
