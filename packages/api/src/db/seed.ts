@@ -24,15 +24,17 @@ async function main() {
     console.log('Cats already exist, skipping.');
   }
 
-  // Insert default foods
+  // Insert default foods. The close-day flow expects an active BASE product —
+  // without it the dinner calculator has no kibble to save.
   const existingFoods = await db.select().from(foods);
   if (existingFoods.length === 0) {
     await db.insert(foods).values([
-      { name: 'Karma standardowa', category: 'KIBBLE', kcalPer100g: '100' },
-      { name: 'Karma mokra Animonda', category: 'WET_FOOD', kcalPer100g: '85' },
-      { name: 'Królik surowy', category: 'MEAT', kcalPer100g: '114' },
-      { name: 'Wołowina chuda', category: 'MEAT', kcalPer100g: '121' },
-      { name: 'Drób surowy', category: 'MEAT', kcalPer100g: '110' },
+      { name: 'Karma bazowa', category: 'BASE', kcalPer100g: '100', unit: 'GRAM' },
+      { name: 'Karma standardowa', category: 'KIBBLE', kcalPer100g: '100', unit: 'GRAM' },
+      { name: 'Karma mokra Animonda', category: 'WET_FOOD', kcalPer100g: '85', unit: 'GRAM' },
+      { name: 'Królik surowy', category: 'MEAT', kcalPer100g: '114', unit: 'GRAM' },
+      { name: 'Wołowina chuda', category: 'MEAT', kcalPer100g: '121', unit: 'GRAM' },
+      { name: 'Drób surowy', category: 'MEAT', kcalPer100g: '110', unit: 'GRAM' },
     ]);
     console.log('Default foods created.');
   } else {
