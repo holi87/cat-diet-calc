@@ -22,6 +22,7 @@ import {
   CATEGORY_CHART_COLORS,
   ALL_CATEGORIES,
 } from '../constants/categories';
+import { daysAgo, localDateStr } from '../lib/dates';
 
 type Unit = 'kcal' | 'grams';
 type RangeMode = 'last' | 'custom';
@@ -33,16 +34,6 @@ function isFoodCategory(value: unknown): value is FoodCategory {
 function formatDateLabel(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00');
   return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
-}
-
-function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
-function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n + 1);
-  return d.toISOString().split('T')[0];
 }
 
 // Custom tooltip for the stacked bar chart
@@ -127,7 +118,7 @@ export function HistoryPage() {
     if (rangeMode === 'custom' && customFrom && customTo) {
       return { from: customFrom, to: customTo };
     }
-    return { from: daysAgo(lastNDays), to: todayStr() };
+    return { from: daysAgo(lastNDays), to: localDateStr() };
   }, [rangeMode, lastNDays, customFrom, customTo]);
 
   const { data: history, isLoading } = useQuery<DailyHistoryResponse>({

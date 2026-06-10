@@ -28,8 +28,7 @@ describe('AddMealForm', () => {
     await user.click(screen.getByRole('button', { name: /Przysmak/ }));
 
     const amountInput = screen.getByPlaceholderText('Liczba sztuk');
-    expect(amountInput.getAttribute('min')).toBe('0.01');
-    expect(amountInput.getAttribute('step')).toBe('0.01');
+    expect(amountInput.getAttribute('inputmode')).toBe('decimal');
 
     await user.type(amountInput, '1');
     expect(screen.getByText('≈ 1.5 kcal')).toBeTruthy();
@@ -37,6 +36,19 @@ describe('AddMealForm', () => {
     await user.click(screen.getByRole('button', { name: 'Dodaj' }));
 
     expect(onSubmit).toHaveBeenCalledWith({ foodId: 'food-treat', pieces: 1 });
+  });
+
+  it('accepts a comma as the decimal separator', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<AddMealForm foods={foods} onSubmit={onSubmit} />);
+
+    await user.type(screen.getByPlaceholderText('Gramatura (g)'), '12,5');
+    expect(screen.getByText('≈ 12.5 kcal')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Dodaj' }));
+
+    expect(onSubmit).toHaveBeenCalledWith({ foodId: 'food-kibble', grams: 12.5 });
   });
 
   it('does not submit without a positive amount', async () => {

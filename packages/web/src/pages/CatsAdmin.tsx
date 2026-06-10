@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api/client';
 import { Cat } from '../types';
+import { DecimalInput } from '../components/DecimalInput';
 
 function resizeImage(file: File, maxSize: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -72,6 +73,9 @@ export function CatsAdmin() {
       apiPut(`/cats/${editingCat!.id}`, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cats'] });
+      // dailyKcalTarget feeds the day summary and history views
+      qc.invalidateQueries({ queryKey: ['day-summary'] });
+      qc.invalidateQueries({ queryKey: ['history'] });
       resetForm();
     },
   });
@@ -212,13 +216,10 @@ export function CatsAdmin() {
             onChange={(e) => setKcal(e.target.value)}
             className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
-          <input
-            type="number"
+          <DecimalInput
             placeholder="Waga docelowa (kg) — opcjonalnie"
             value={targetWeight}
-            min={0.1}
-            step={0.01}
-            onChange={(e) => setTargetWeight(e.target.value)}
+            onValueChange={setTargetWeight}
             className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
           <div className="flex gap-2">

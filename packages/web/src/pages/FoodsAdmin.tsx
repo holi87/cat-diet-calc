@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '../api/client';
 import { Food, FoodCategory, FoodUnit } from '../types';
 import { CATEGORY_BADGE_COLORS, CATEGORY_LABELS } from '../constants/categories';
+import { DecimalInput } from '../components/DecimalInput';
 
 const categories: { value: FoodCategory; label: string }[] = [
   { value: 'BASE', label: 'Karma bazowa' },
@@ -163,23 +164,17 @@ export function FoodsAdmin() {
           </div>
 
           {unit === 'PIECE' ? (
-            <input
-              type="number"
+            <DecimalInput
               placeholder="kcal / szt."
               value={kcalPerPiece}
-              min={0}
-              step={0.1}
-              onChange={(e) => setKcalPerPiece(e.target.value)}
+              onValueChange={setKcalPerPiece}
               className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
             />
           ) : (
-            <input
-              type="number"
+            <DecimalInput
               placeholder="kcal / 100g"
               value={kcal}
-              min={0}
-              step={0.1}
-              onChange={(e) => setKcal(e.target.value)}
+              onValueChange={setKcal}
               className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
             />
           )}

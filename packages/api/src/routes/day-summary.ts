@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { eq, and, gte, lt } from 'drizzle-orm';
 import { feedEntries, cats, foods } from '../db/schema';
 import { createDbClient } from '../db/client';
+import { zonedDayRange } from '../lib/dates';
 
 export async function daySummaryRoutes(fastify: FastifyInstance) {
   const db = createDbClient(fastify);
@@ -27,8 +28,7 @@ export async function daySummaryRoutes(fastify: FastifyInstance) {
       const [cat] = await db.select().from(cats).where(eq(cats.id, catId));
       if (!cat) return reply.code(404).send({ error: 'Cat not found' });
 
-      const dayStart = new Date(`${date}T00:00:00.000Z`);
-      const dayEnd = new Date(`${date}T23:59:59.999Z`);
+      const { start: dayStart, end: dayEnd } = zonedDayRange(date);
 
       const entries = await db
         .select({
@@ -51,7 +51,7 @@ export async function daySummaryRoutes(fastify: FastifyInstance) {
           and(
             eq(feedEntries.catId, catId),
             gte(feedEntries.datetime, dayStart),
-            lt(feedEntries.datetime, new Date(dayEnd.getTime() + 1)),
+            lt(feedEntries.datetime, dayEnd),
           ),
         )
         .orderBy(feedEntries.datetime);

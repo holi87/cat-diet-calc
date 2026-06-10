@@ -83,4 +83,15 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Poprawka dodawania przysmaków na sztuki — prawidłowe liczenie kalorii dla porcji sztukowych',
     ],
   },
+  {
+    version: '1.6.1',
+    changes: [
+      'Naprawiona strefa czasowa — dzień liczony wg czasu polskiego, wpisy po północy trafiają do właściwego dnia',
+      'Kolacja domykana po północy zapisuje się w domykanym dniu, a data odświeża się po wznowieniu aplikacji',
+      'Posiłek dodany przy przeglądaniu innego dnia zapisuje się w tym dniu (nie „na teraz")',
+      'Pola liczbowe akceptują przecinek dziesiętny (np. „4,2 kg")',
+      'Błędy zapisu i pobierania danych pokazują komunikat zamiast cichego niepowodzenia',
+      'Karta „Ostatnie 7 dni", Historia i limit kcal odświeżają się od razu po zmianach',
+    ],
+  },
 ];

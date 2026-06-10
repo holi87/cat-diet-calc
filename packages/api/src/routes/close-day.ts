@@ -3,6 +3,7 @@ import { eq, and, gte, lt } from 'drizzle-orm';
 import { feedEntries, cats, foods } from '../db/schema';
 import { createDbClient } from '../db/client';
 import { calculateCloseDay, calculateKcal } from '../lib/calc';
+import { localDateStr, zonedDayRange } from '../lib/dates';
 
 const STANDARD_KIBBLE_KCAL = 100; // 1g = 1 kcal
 
@@ -35,8 +36,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
     const [cat] = await db.select().from(cats).where(eq(cats.id, catId));
     if (!cat) throw { statusCode: 404, message: 'Cat not found' };
 
-    const dayStart = new Date(`${date}T00:00:00.000Z`);
-    const dayEnd = new Date(`${date}T23:59:59.999Z`);
+    const { start: dayStart, end: dayEnd } = zonedDayRange(date);
 
     const entries = await db
       .select()
@@ -45,7 +45,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
         and(
           eq(feedEntries.catId, catId),
           gte(feedEntries.datetime, dayStart),
-          lt(feedEntries.datetime, new Date(dayEnd.getTime() + 1)),
+          lt(feedEntries.datetime, dayEnd),
         ),
       );
 
@@ -114,7 +114,25 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
       const { date, catId, meatFoodId, meatGrams = 0 } = req.body;
 
       const savedEntries: (typeof feedEntries.$inferSelect)[] = [];
-      const datetime = new Date();
+
+      // Keep dinner entries inside the day being closed — committing after local
+      // midnight (or for a past day) must not leak entries into the current day.
+      const { end: dayEnd } = zonedDayRange(date);
+      let datetime: Date;
+      let kibbleDatetime: Date;
+      if (date === localDateStr()) {
+        datetime = new Date();
+        kibbleDatetime = new Date(datetime.getTime() + 60_000);
+        if (kibbleDatetime.getTime() >= dayEnd.getTime()) {
+          kibbleDatetime = new Date(dayEnd.getTime() - 60_000);
+          if (datetime.getTime() >= kibbleDatetime.getTime()) {
+            datetime = new Date(kibbleDatetime.getTime() - 60_000);
+          }
+        }
+      } else {
+        datetime = new Date(dayEnd.getTime() - 120_000);
+        kibbleDatetime = new Date(dayEnd.getTime() - 60_000);
+      }
 
       // Transaction: insert meat + kibble entries
       await db.transaction(async (tx) => {
@@ -145,7 +163,7 @@ export async function closeDayRoutes(fastify: FastifyInstance) {
               foodId: resolvedKibbleFoodId,
               grams: String(result.kibbleGrams),
               kcalCalculated: String(kcal),
-              datetime: new Date(datetime.getTime() + 60000),
+              datetime: kibbleDatetime,
               note: 'kolacja:karma',
             })
             .returning();

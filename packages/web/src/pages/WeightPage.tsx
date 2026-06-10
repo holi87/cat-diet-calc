@@ -12,6 +12,8 @@ import {
 } from 'recharts';
 import { apiGet, apiPost } from '../api/client';
 import { Cat, WeightEntry } from '../types';
+import { localDateStr } from '../lib/dates';
+import { DecimalInput } from '../components/DecimalInput';
 
 function formatDateLabel(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00');
@@ -21,7 +23,7 @@ function formatDateLabel(dateStr: string): string {
 export function WeightPage() {
   const qc = useQueryClient();
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(localDateStr());
   const [weightKg, setWeightKg] = useState('');
   const [note, setNote] = useState('');
 
@@ -48,6 +50,7 @@ export function WeightPage() {
       apiPost('/weight-entries', { catId, date, weightKg: parseFloat(weightKg), note: note || undefined }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['weight-entries', catId] });
+      qc.invalidateQueries({ queryKey: ['history'] });
       setWeightKg(''); setNote('');
     },
   });
@@ -149,14 +152,11 @@ export function WeightPage() {
         </div>
         <div>
           <label htmlFor="weight-kg" className="text-xs font-medium text-gray-500 dark:text-gray-400">Waga (kg)</label>
-          <input
+          <DecimalInput
             id="weight-kg"
-            type="number"
-            placeholder="np. 4.25"
+            placeholder="np. 4,25"
             value={weightKg}
-            min={0.1}
-            step={0.01}
-            onChange={(e) => setWeightKg(e.target.value)}
+            onValueChange={setWeightKg}
             className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 dark:focus:ring-brand-500"
           />
         </div>
