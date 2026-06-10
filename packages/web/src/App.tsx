@@ -11,6 +11,7 @@ import { FoodsAdmin } from './pages/FoodsAdmin';
 import { WeightPage } from './pages/WeightPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { DataPage } from './pages/DataPage';
+import { NotFound } from './pages/NotFound';
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'nieznany błąd';
@@ -53,6 +54,7 @@ function App() {
               <Route path="/weight" element={<WeightPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/admin/data" element={<DataPage />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
         </BrowserRouter>
