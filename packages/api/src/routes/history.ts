@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { eq, and, gte, lt, lte, sql as drizzleSql } from 'drizzle-orm';
 import { feedEntries, cats, foods, weightEntries, dayNotes } from '../db/schema';
 import { createDbClient } from '../db/client';
+import { APP_TIME_ZONE, addDays, zonedDayRange } from '../lib/dates';
 
 export async function historyRoutes(fastify: FastifyInstance) {
   const db = createDbClient(fastify);
@@ -28,13 +29,14 @@ export async function historyRoutes(fastify: FastifyInstance) {
       const [cat] = await db.select().from(cats).where(eq(cats.id, catId));
       if (!cat) return reply.code(404).send({ error: 'Cat not found' });
 
-      const fromDate = new Date(`${from}T00:00:00.000Z`);
-      const toDateExclusive = new Date(`${to}T23:59:59.999Z`);
+      const fromDate = zonedDayRange(from).start;
+      const toDateExclusive = zonedDayRange(to).end;
 
-      // Aggregate feed entries by date and food category
+      // Aggregate feed entries by local (Europe/Warsaw) date and food category
+      const localDay = drizzleSql<string>`DATE(${feedEntries.datetime} AT TIME ZONE ${drizzleSql.raw(`'${APP_TIME_ZONE}'`)})`;
       const rows = await db
         .select({
-          date: drizzleSql<string>`DATE(${feedEntries.datetime})`.as('date'),
+          date: localDay.as('date'),
           category: foods.category,
           kcal: drizzleSql<string>`SUM(${feedEntries.kcalCalculated})`.as('kcal'),
           grams: drizzleSql<string>`SUM(${feedEntries.grams})`.as('grams'),
@@ -45,11 +47,11 @@ export async function historyRoutes(fastify: FastifyInstance) {
           and(
             eq(feedEntries.catId, catId),
             gte(feedEntries.datetime, fromDate),
-            lt(feedEntries.datetime, new Date(toDateExclusive.getTime() + 1)),
+            lt(feedEntries.datetime, toDateExclusive),
           ),
         )
-        .groupBy(drizzleSql`DATE(${feedEntries.datetime})`, foods.category)
-        .orderBy(drizzleSql`DATE(${feedEntries.datetime})`);
+        .groupBy(localDay, foods.category)
+        .orderBy(localDay);
 
       // Weight entries in range
       const weights = await db
@@ -91,12 +93,8 @@ export async function historyRoutes(fastify: FastifyInstance) {
       // Build day map with all dates in range (fill gaps)
       const dayMap = new Map<string, { category: string; kcal: number; grams: number }[]>();
 
-      const current = new Date(`${from}T12:00:00Z`);
-      const end = new Date(`${to}T12:00:00Z`);
-      while (current <= end) {
-        const dateStr = current.toISOString().split('T')[0];
-        dayMap.set(dateStr, []);
-        current.setDate(current.getDate() + 1);
+      for (let d = from; d <= to; d = addDays(d, 1)) {
+        dayMap.set(d, []);
       }
 
       // Fill actual data

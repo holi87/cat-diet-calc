@@ -340,6 +340,57 @@ describe('API integration', integrationOptions, () => {
     assert.equal(committed.body.savedEntries[1].foodId, baseFood.id);
   });
 
+  it('assigns entries around local midnight to the Europe/Warsaw day', async () => {
+    const cat = await createCat({ dailyKcalTarget: 200 });
+    const kibble = await createFood({ name: 'Karma', category: 'KIBBLE', kcalPer100g: 100 });
+    // 23:30 UTC on Jun 1 = 01:30 on Jun 2 in Warsaw (UTC+2 in summer)
+    await addFeedEntry({
+      catId: cat.id,
+      foodId: kibble.id,
+      grams: 10,
+      datetime: '2026-06-01T23:30:00.000Z',
+    });
+    // 21:30 UTC on Jun 1 = 23:30 on Jun 1 in Warsaw
+    await addFeedEntry({
+      catId: cat.id,
+      foodId: kibble.id,
+      grams: 20,
+      datetime: '2026-06-01T21:30:00.000Z',
+    });
+
+    const day1 = await requestJson<DaySummaryResponse>({
+      method: 'GET',
+      url: `/api/day-summary?catId=${cat.id}&date=2026-06-01`,
+    });
+    const day2 = await requestJson<DaySummaryResponse>({
+      method: 'GET',
+      url: `/api/day-summary?catId=${cat.id}&date=2026-06-02`,
+    });
+
+    assert.equal(day1.body.totalKcal, 20);
+    assert.equal(day2.body.totalKcal, 10);
+  });
+
+  it('stores dinner entries inside the closed day when committing a past day', async () => {
+    const cat = await createCat({ dailyKcalTarget: 220 });
+    await createFood({ name: 'Baza', category: 'BASE', kcalPer100g: 100 });
+
+    const committed = await requestJson<{
+      savedEntries: Array<{ datetime: string; note: string | null }>;
+    }>({
+      method: 'POST',
+      url: '/api/close-day/commit',
+      payload: { catId: cat.id, date: '2026-06-01' },
+    });
+
+    assert.equal(committed.statusCode, 201);
+    assert.equal(committed.body.savedEntries.length, 1);
+    const ts = new Date(committed.body.savedEntries[0].datetime).getTime();
+    // 2026-06-01 in Warsaw = [2026-05-31T22:00Z, 2026-06-01T22:00Z)
+    assert.equal(ts >= Date.parse('2026-05-31T22:00:00.000Z'), true);
+    assert.equal(ts < Date.parse('2026-06-01T22:00:00.000Z'), true);
+  });
+
   it('stores and lists weight entries in newest-first order', async () => {
     const cat = await createCat();
     await createWeight({ catId: cat.id, date: '2026-06-01', weightKg: 4.2 });

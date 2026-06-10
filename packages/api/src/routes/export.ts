@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { eq, and, gte, lt } from 'drizzle-orm';
 import { feedEntries, foods, cats } from '../db/schema';
 import { createDbClient } from '../db/client';
+import { localDateStr, localTimeStr, zonedDayRange } from '../lib/dates';
 
 export async function exportRoutes(fastify: FastifyInstance) {
   const db = createDbClient(fastify);
@@ -28,8 +29,8 @@ export async function exportRoutes(fastify: FastifyInstance) {
       const [cat] = await db.select().from(cats).where(eq(cats.id, catId));
       if (!cat) return reply.code(404).send({ error: 'Cat not found' });
 
-      const fromDate = new Date(`${from}T00:00:00.000Z`);
-      const toDateExclusive = new Date(`${to}T23:59:59.999Z`);
+      const fromDate = zonedDayRange(from).start;
+      const toDateExclusive = zonedDayRange(to).end;
 
       const rows = await db
         .select({
@@ -48,7 +49,7 @@ export async function exportRoutes(fastify: FastifyInstance) {
           and(
             eq(feedEntries.catId, catId),
             gte(feedEntries.datetime, fromDate),
-            lt(feedEntries.datetime, new Date(toDateExclusive.getTime() + 1)),
+            lt(feedEntries.datetime, toDateExclusive),
           ),
         )
         .orderBy(feedEntries.datetime);
@@ -66,8 +67,8 @@ export async function exportRoutes(fastify: FastifyInstance) {
       const header = 'Data,Godzina,Kategoria,Produkt,Gramy,Sztuki,Kcal,Notatka';
       const csvRows = rows.map((row) => {
         const dt = new Date(row.datetime);
-        const dateStr = dt.toISOString().split('T')[0];
-        const timeStr = dt.toTimeString().substring(0, 5);
+        const dateStr = localDateStr(dt);
+        const timeStr = localTimeStr(dt);
         const category = categoryLabels[row.foodCategory ?? ''] ?? row.foodCategory ?? '';
         const name = escapeCsvField(row.foodName ?? '');
         const isPiece = row.foodUnit === 'PIECE' && row.pieces != null;
